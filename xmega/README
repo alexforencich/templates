@@ -1,0 +1,13 @@
+Ateml AVR xmega template (avr-gcc)
+
+This is a basic template project for an Atmel AVR xmega microcontroller.  The
+template includes libraries for several common peripherals.  It uses the
+avr-gcc toolchain and the avrdude programmer.  
+
+Included Libraries:
+  * Usart
+  * EEPROM
+  * SPI
+  * I2C/TWI
+
+

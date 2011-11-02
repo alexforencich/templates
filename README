@@ -4,5 +4,6 @@ This is a collection of template projects for various applications.
 
 Included templates:
 
+* xmega (AVR xmega 8-bit microcontroller, avr-gcc toolchain)
 
 

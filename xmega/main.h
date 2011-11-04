@@ -32,6 +32,7 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
+#include <math.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <util/delay.h>

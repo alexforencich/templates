@@ -37,7 +37,7 @@
 #define USART_RX_BUF_SIZE 64
 char usart_txbuf[USART_TX_BUF_SIZE];
 char usart_rxbuf[USART_RX_BUF_SIZE];
-CREATE_USART(usart, UART_DEVICE_PORT, usart_txbuf, USART_TX_BUF_SIZE, usart_rxbuf, USART_TX_BUF_SIZE);
+CREATE_USART(usart, UART_DEVICE_PORT);
 FILE usart_stream;
 
 // SPI
@@ -104,6 +104,8 @@ void init(void)
                 LED_USR_4_PIN_bm | LED_USR_5_PIN_bm | LED_USR_6_PIN_bm | LED_USR_7_PIN_bm;
         
         // UARTs
+        usart.set_tx_buffer(usart_txbuf, USART_TX_BUF_SIZE);
+        usart.set_rx_buffer(usart_rxbuf, USART_RX_BUF_SIZE);
         usart.begin(UART_BAUD_RATE);
         usart.setup_stream(&usart_stream);
         

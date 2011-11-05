@@ -200,17 +200,17 @@ char __attribute__ ((noinline)) Usart::get_txpin(char _usart)
 }
 
 
-Usart::Usart(USART_t *_usart, char *_txbuf, size_t _txbuf_size, char *_rxbuf, size_t _rxbuf_size) :
+Usart::Usart(USART_t *_usart) :
         usart(_usart),
-        txbuf(_txbuf),
-        txbuf_size(_txbuf_size),
+        txbuf(0),
+        txbuf_size(0),
         txbuf_head(0),
         txbuf_tail(0),
-        rxbuf(_rxbuf),
-        rxbuf_size(_rxbuf_size),
+        rxbuf(0),
+        rxbuf_size(0),
         rxbuf_head(0),
         rxbuf_tail(0),
-        flags(USART_TX_QUEUE_EMPTY | USART_RX_QUEUE_EMPTY)
+        flags(USART_TX_QUEUE_FULL | USART_RX_QUEUE_FULL)
 {
         usart_ind = which_usart(_usart);
         usart_list[usart_ind-1] = this;
@@ -222,6 +222,24 @@ Usart::~Usart()
 {
         end();
         usart_list[usart_ind-1] = 0;
+}
+
+
+void Usart::set_tx_buffer(char *_txbuf, size_t _txbuf_size)
+{
+        txbuf = _txbuf;
+        txbuf_size = _txbuf_size;
+        flags &= ~USART_TX_QUEUE_FULL;
+        flags |= USART_TX_QUEUE_EMPTY;
+}
+
+
+void Usart::set_rx_buffer(char *_rxbuf, size_t _rxbuf_size)
+{
+        rxbuf = _rxbuf;
+        rxbuf_size = _rxbuf_size;
+        flags &= ~USART_RX_QUEUE_FULL;
+        flags |= USART_RX_QUEUE_EMPTY;
 }
 
 

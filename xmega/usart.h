@@ -69,8 +69,8 @@
 #define USART_RX_QUEUE_FULL 0x80
 #define USART_RUNNING 0x01
 
-#define CREATE_USART(name, device_port, txbuf, txbuf_size, rxbuf, rxbuf_size) \
-        Usart (name)(&token_paste2(USART, device_port), txbuf, txbuf_size, rxbuf, rxbuf_size); \
+#define CREATE_USART(name, device_port) \
+        Usart (name)(&token_paste2(USART, device_port)); \
         ISR(token_paste3(USART, device_port, _DRE_vect)) \
         { \
                 Usart::handle_interrupts(&name); \
@@ -114,8 +114,11 @@ public:
         // Public variables
         
         // Public methods
-        Usart(USART_t *_usart, char *_txbuf, size_t _txbuf_size, char *_rxbuf, size_t _rxbuf_size);
+        Usart(USART_t *_usart);
         ~Usart();
+        
+        void set_tx_buffer(char *_txbuf, size_t _txbuf_size);
+        void set_rx_buffer(char *_rxbuf, size_t _rxbuf_size);
         
         void begin(long baud);
         void end();

@@ -2,8 +2,15 @@ Various Project Templates
 
 This is a collection of template projects for various applications.
 
+For more information and updates:
+http://alexforencich.com/wiki/en/templates/start
+
+GitHub repository:
+https://github.com/alexforencich/templates
+
 Included templates:
 
 * xmega (AVR xmega 8-bit microcontroller, avr-gcc toolchain)
+* simple-gtk (Linux/Windows cross-platform GTK application, gcc/mingw)
 
 

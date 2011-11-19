@@ -4,7 +4,7 @@ dir=`pwd`
 
 echo "Bootstrapping in $dir..."
 
-aclocal
+aclocal $ACLOCAL_FLAGS
 autoheader
 automake --foreign --add-missing --copy
 autoconf

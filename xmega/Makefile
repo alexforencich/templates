@@ -308,7 +308,7 @@ endif
 # See datasheet section 4.16.3 for more information
 # If a custom configuration is needed, please
 # override it here
-AVRDUDE_FUSES += $(AVRDUDE_FUSES_RESET_CONFIG)
+#AVRDUDE_FUSES += $(AVRDUDE_FUSES_RESET_CONFIG)
 
 # There is no fuse byte 3.....
 

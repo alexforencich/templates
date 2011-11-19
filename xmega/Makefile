@@ -2,7 +2,7 @@
 #
 # General-purpose makefile for ATMEL XMEGA
 #
-# based on the 
+# based on the
 # WinAVR Sample makefile written by Eric B. Weddington, Jörg Wunsch, et al.
 # Released to the Public Domain
 # Please read the make user manual!
@@ -41,16 +41,53 @@
 
 # MCU name
 ## MCU = atxmega16a4
-## MCU = atxmega16d4
 ## MCU = atxmega32a4
-## MCU = atxmega32d4
 ## MCU = atxmega64a1
 ## MCU = atxmega64a3
+## MCU = atxmega64a4
 ## MCU = atxmega128a1
 ## MCU = atxmega128a3
+## MCU = atxmega128a4
+## MCU = atxmega192a1
+## MCU = atxmega192a3
+## MCU = atxmega256a1
 ## MCU = atxmega256a3
 ## MCU = atxmega256a3b
+## MCU = atxmega16d4
+## MCU = atxmega32d4
+## MCU = atxmega64d3
+## MCU = atxmega64d4
+## MCU = atxmega128d3
+## MCU = atxmega128d4
+## MCU = atxmega192d3
+## MCU = atxmega256d3
+## MCU = atxmega16a4u
+## MCU = atxmega32a4u
+## MCU = atxmega64a3u
+## MCU = atxmega64a4u
+## MCU = atxmega128a3u
+## MCU = atxmega128a4u
+## MCU = atxmega192a3u
+## MCU = atxmega256a3u
+## MCU = atxmega256a3bu
+## MCU = atxmega64b1
+## MCU = atxmega64b3
+## MCU = atxmega128b1
+## MCU = atxmega128b3
 MCU = atxmega128a3
+
+# Is this a bootloader?
+MAKE_BOOTLOADER=no
+
+# Only program boot section
+# (XMega only)
+# This will create a target-boot.hex file with the program relocated to
+# address 0 and then program the file directly to the boot section.  It
+# is faster than programming the entire application section with
+# nothing and has the added advantage of leaving the application
+# section in tact
+# Note: ignored if MAKE_BOOTLOADER is not set
+PROG_BOOT_ONLY=yes
 
 # CPU Frequency
 #F_CPU=2000000
@@ -80,8 +117,7 @@ SRC += usart.cpp spi.cpp i2c.cpp eeprom.cpp
 # it will preserve the spelling of the filenames, and gcc itself does
 # care about how the name is spelled on its command-line.
 ASRC =
-
-
+# ASRC += ...
 
 # Optimization level, can be [0, 1, 2, 3, s].
 # 0 = turn off optimization. s = optimize for size.
@@ -200,13 +236,17 @@ LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
 #AVRDUDE_PROGRAMMER = jtag2pdi
 AVRDUDE_PROGRAMMER = avr109
 
+# Port
 # com1 = serial port. Use lpt1 to connect to parallel port.
+# Use usb for usb devices
+# For *nix, need device path (/dev/ttyUSBn, /dev/ttySn)
 #AVRDUDE_PORT = usb
 AVRDUDE_PORT = /dev/ttyUSB0
 
-# baud rate
+# BAUD Rate
 AVRDUDE_BAUD = 115200
 
+# Sections to write
 AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 #AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
 
@@ -225,21 +265,78 @@ AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 # to submit bug reports.
 #AVRDUDE_VERBOSE = -v -v
 
-# Write fuse and lock bits
-AVRDUDE_FUSES = 
-#AVRDUDE_FUSES += -U fuse0:w:0x00:m # JTAG ID
-#AVRDUDE_FUSES += -U fuse1:w:0x00:m # Watchdog
-#AVRDUDE_FUSES += -U fuse2:w:0xFF:m # Reset
-#AVRDUDE_FUSES += -U fuse2:w:0xBF:m # Reset (Bootloader)
-#AVRDUDE_FUSES += -U fuse4:w:0xFE:m # Start-up config
-#AVRDUDE_FUSES += -U fuse5:w:0xFF:m # Fuse byte 5
-#AVRDUDE_FUSES += -U lock:w:0xFF:m # Lock byte
+# Erase behaviour
+# Normaly with an XMega, the programmer should automatically erase a 
+# page before flashing. 
+# It seems that at least the avrdragon_jtag (and probably other types) 
+# don't do so(Feb 11)
+# In that case, erase the chip before flashing
+# Force chip erase
+#AVRDUDE_CHIP_ERASE = -e
+# Disable automatic chip erase
+#AVRDUDE_CHIP_ERASE = -D
 
+# Fuses and Lock Bits
+# See XMega A series datasheet (Atmel doc8077) section 4.16
+AVRDUDE_FUSES =
+
+# Resest Configuration (for fuse byte 2)
+# If a custom configuration is needed, please
+# override farther down in the fuse byte 2 section
+ifeq ($(MAKE_BOOTLOADER), yes)
+# Reset (Bootloader)
+AVRDUDE_FUSES_RESET_CONFIG = -U fuse2:w:0xBF:m
+else
+# Reset (Regular)
+AVRDUDE_FUSES_RESET_CONFIG = -U fuse2:w:0xFF:m
+endif
+
+# Fuse byte 0: JTAG User ID
+# If a custom JTAG User ID is required, uncomment
+# and set it here
+#AVRDUDE_FUSES += -U fuse0:w:0x00:m
+
+# Fuse byte 1: Watchdog
+# Set WDPER and WDWPER
+# See datasheet sections 4.16.2, 11.7.1, and 11.7.2
+# for more information
+#AVRDUDE_FUSES += -U fuse1:w:0x00:m
+
+# Fuse byte 2: Reset configuration
+# Spike detector, reset vector location, and BOD
+# in power down configuration
+# See datasheet section 4.16.3 for more information
+# If a custom configuration is needed, please
+# override it here
+AVRDUDE_FUSES += $(AVRDUDE_FUSES_RESET_CONFIG)
+
+# There is no fuse byte 3.....
+
+# Fuse byte 4: Start-up configuration
+# See datasheet section 4.16.4
+# Configures external reset disable, start-up time,
+# watchdog timer lock, and jtag enable
+#AVRDUDE_FUSES += -U fuse4:w:0xFE:m
+
+# Fuse byte 5
+# See datasheet section 4.16.5
+# Configures BOD operation in active mode,
+# EEPROM preserved through chip erase, and
+# BOD detection leven
+#AVRDUDE_FUSES += -U fuse5:w:0xFF:m
+
+# Lock byte
+# See datasheet section 4.16.6
+# Lock bits for boot loader, application,
+# and application table sections via internal
+# SPM commands and external programming interface
+#AVRDUDE_FUSES += -U lock:w:0xFF:m
 
 # Write user sig row (256 bytes max)
+# Uncomment to initialize user sig row with custom data
 ##AVRDUDE_USERSIG = -U usersig:w:0x01,0x02,0x03:m
 ##AVRDUDE_USERSIG = -U usersig:w:filename
-# AVRDUDE_USERSIG = -U usersig:w:...:m
+#AVRDUDE_USERSIG = -U usersig:w:...:m
 
 AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 ifdef AVRDUDE_BAUD
@@ -248,8 +345,43 @@ endif
 AVRDUDE_FLAGS += $(AVRDUDE_NO_VERIFY)
 AVRDUDE_FLAGS += $(AVRDUDE_VERBOSE)
 AVRDUDE_FLAGS += $(AVRDUDE_ERASE_COUNTER)
+AVRDUDE_FLAGS += $(AVRDUDE_CHIP_ERASE)
 
+ifeq ($(MAKE_BOOTLOADER), yes)
+ifeq ($(PROG_BOOT_ONLY), yes)
+  BOOT_TARGET=$(TARGET)-boot.hex
+  AVRDUDE_WRITE_FLASH = -U boot:w:$(TARGET)-boot.hex
+endif
+endif
 
+# ---------------------------------------------------------------------------
+
+# Processor definitions
+MCU_S = $(subst atxmega,x,$(MCU))
+ifneq ($(filter $(MCU_S), x16a4 x16d4 x16a4u),)
+  BOOT_SECTION_START		=0x004000
+endif
+ifneq ($(filter $(MCU_S), x32a4 x32d4 x32a4u),)
+  BOOT_SECTION_START		=0x008000
+endif
+ifneq ($(filter $(MCU_S), x64a1 x64a3 x64a4 x64d3 x64d4 x64a3u x64a4u x64b1 x64b3),)
+  BOOT_SECTION_START		=0x010000
+endif
+ifneq ($(filter $(MCU_S), x128a1 x128a3 x128a4 x128d3 x128d4 x128a3u x128a4u x128b1 x128b3),)
+  BOOT_SECTION_START		=0x020000
+endif
+ifneq ($(filter $(MCU_S), x192a1 x192a3 x192d3 x192a3u),)
+  BOOT_SECTION_START		=0x030000
+endif
+ifneq ($(filter $(MCU_S), x256a1 x256a3 x256a3b x256d3 x256a3u x256a3bu),)
+  BOOT_SECTION_START		=0x040000
+endif
+
+ifeq ($(MAKE_BOOTLOADER), yes)
+# BOOT_SECTION_START (=Start of Boot Loader section
+# in bytes - not words) as defined above.
+LDFLAGS += -Wl,--section-start=.text=$(BOOT_SECTION_START)
+endif
 
 # ---------------------------------------------------------------------------
 
@@ -265,7 +397,7 @@ AVRDUDE_FLAGS += $(AVRDUDE_ERASE_COUNTER)
 #SHELL = $(DIRAVRUTILS)/sh
 #NM = $(DIRAVRBIN)/avr-nm
 #CC = $(DIRAVRBIN)/avr-gcc
-#CC = $(DIRAVRBIN)/avr-g++
+#CXX = $(DIRAVRBIN)/avr-g++
 #OBJCOPY = $(DIRAVRBIN)/avr-objcopy
 #OBJDUMP= $(DIRAVRBIN)/avr-objdump
 #SIZE = $(DIRAVRBIN)/avr-size
@@ -297,6 +429,7 @@ MSG_SIZE_AFTER = Size after:
 MSG_COFF = Converting to AVR COFF:
 MSG_EXTENDED_COFF = Converting to AVR Extended COFF:
 MSG_FLASH = Creating load file for Flash:
+MSG_BOOT = Creating load file for boot section:
 MSG_EEPROM = Creating load file for EEPROM:
 MSG_EXTENDED_LISTING = Creating Extended Listing:
 MSG_SYMBOL_TABLE = Creating Symbol Table:
@@ -304,6 +437,8 @@ MSG_LINKING = Linking:
 MSG_COMPILING = Compiling:
 MSG_ASSEMBLING = Assembling:
 MSG_CLEANING = Cleaning project:
+
+
 
 
 # Define all object files.
@@ -333,7 +468,7 @@ all: begin gccversion sizebefore build sizeafter finished end
 build: elf hex eep lss sym
 
 elf: $(TARGET).elf
-hex: $(TARGET).hex
+hex: $(TARGET).hex $(BOOT_TARGET)
 eep: $(TARGET).eep
 lss: $(TARGET).lss
 sym: $(TARGET).sym
@@ -373,7 +508,7 @@ gccversion :
 
 
 # Program the device.
-program: $(TARGET).hex $(TARGET).eep
+program: $(TARGET).hex $(TARGET).eep $(BOOT_TARGET)
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM) $(AVRDUDE_USERSIG) $(AVRDUDE_FUSES)
 
 
@@ -405,6 +540,11 @@ extcoff: $(TARGET).elf
 	@echo
 	@echo $(MSG_FLASH) $@
 	$(OBJCOPY) -O $(FORMAT) -R .eeprom $< $@
+
+%-boot.hex: %.hex
+	@echo
+	@echo $(MSG_BOOT) $@
+	$(OBJCOPY) -O $(FORMAT) --change-addresses -$(BOOT_SECTION_START) $< $@
 
 %.eep: %.elf
 	@echo
@@ -474,6 +614,7 @@ clean_list :
 	@echo
 	@echo $(MSG_CLEANING)
 	$(REMOVE) $(TARGET).hex
+	$(REMOVE) $(TARGET)-boot.hex
 	$(REMOVE) $(TARGET).eep
 	$(REMOVE) $(TARGET).obj
 	$(REMOVE) $(TARGET).cof

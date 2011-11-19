@@ -24,7 +24,7 @@ if test "$WIN32" = "yes"; then
         % ...
 fi
 
-PKG_CHECK_MODULES([DEPS], [gtkmm-2.4 >= 2.24.0])
+PKG_CHECK_MODULES([DEPS], [gtkmm-2.4 >= 2.22.0])
 
 AC_SUBST(DEPS_CFLAGS)
 AC_SUBST(DEPS_LIBS)

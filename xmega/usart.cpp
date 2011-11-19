@@ -229,6 +229,8 @@ void Usart::set_tx_buffer(char *_txbuf, size_t _txbuf_size)
 {
         txbuf = _txbuf;
         txbuf_size = _txbuf_size;
+        txbuf_head = 0;
+        txbuf_tail = 0;
         flags &= ~USART_TX_QUEUE_FULL;
         flags |= USART_TX_QUEUE_EMPTY;
 }
@@ -238,6 +240,8 @@ void Usart::set_rx_buffer(char *_rxbuf, size_t _rxbuf_size)
 {
         rxbuf = _rxbuf;
         rxbuf_size = _rxbuf_size;
+        rxbuf_head = 0;
+        rxbuf_tail = 0;
         flags &= ~USART_RX_QUEUE_FULL;
         flags |= USART_RX_QUEUE_EMPTY;
 }
@@ -385,7 +389,7 @@ void (Usart::putc)(char c)
 {
         uint8_t saved_status = 0;
         
-        if (!(flags & USART_RUNNING))
+        if (!(flags & USART_RUNNING) || (CPU_I_bm && (flags & USART_RX_QUEUE_FULL)))
                 return;
         
         while (flags & USART_TX_QUEUE_FULL) { };
@@ -443,7 +447,7 @@ char (Usart::getc)()
         uint8_t saved_status = 0;
         char c;
         
-        if (!(flags & USART_RUNNING))
+        if (!(flags & USART_RUNNING) || (CPU_I_bm && (flags & USART_RX_QUEUE_EMPTY)))
                 return 0;
         
         while (flags & USART_RX_QUEUE_EMPTY) { };
@@ -468,7 +472,7 @@ int Usart::ungetc(int c)
 {
         uint8_t saved_status = 0;
         
-        if (c == EOF || flags & USART_RX_QUEUE_FULL)
+        if (c == EOF || flags & USART_RX_QUEUE_FULL || (CPU_I_bm && (flags & USART_RX_QUEUE_FULL)))
                 return EOF;
         
         saved_status = SREG;

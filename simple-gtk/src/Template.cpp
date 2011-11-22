@@ -3,7 +3,7 @@
 /*                                                                      */
 /* GTK Template                                                         */
 /*                                                                      */
-/* template.cpp                                                         */
+/* Template.cpp                                                         */
 /*                                                                      */
 /* Alex Forencich <alex@alexforencich.com>                              */
 /*                                                                      */
@@ -31,7 +31,7 @@
 /*                                                                      */
 /************************************************************************/
 
-#include "template.h"
+#include "Template.h"
 
 #include <stdio.h>
 #include <stdlib.h>

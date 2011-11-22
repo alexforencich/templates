@@ -33,7 +33,7 @@
 
 #include <gtkmm.h>
 
-#include "template.h"
+#include "Template.h"
 
 int main (int argc, char *argv[])
 {

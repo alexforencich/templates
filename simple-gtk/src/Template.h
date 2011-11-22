@@ -3,7 +3,7 @@
 /*                                                                      */
 /* GTK Template                                                         */
 /*                                                                      */
-/* template.h                                                           */
+/* Template.h                                                           */
 /*                                                                      */
 /* Alex Forencich <alex@alexforencich.com>                              */
 /*                                                                      */

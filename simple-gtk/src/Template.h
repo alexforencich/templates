@@ -36,6 +36,8 @@
 
 #include <gtkmm.h>
 
+#include "SerialInterface.h"
+
 // Template class
 class Template : public Gtk::Window
 {

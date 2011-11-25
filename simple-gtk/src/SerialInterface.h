@@ -44,31 +44,46 @@
 #include <windows.h>
 #endif
 
-#define SI_SUCCESS 0
-#define SI_ERROR 1
-#define SI_TIMEOUT 2
-#define SI_PORT_NOT_OPEN 3
-
-#define SI_FLOW_NONE 0
-#define SI_FLOW_HARDWARE 1
-#define SI_FLOW_XON_XOFF 2
-
-#define SI_PARITY_NONE 0
-#define SI_PARITY_ODD 1
-#define SI_PARITY_EVEN 2
-
 // class SerialInterface
 class SerialInterface
 {
 public:
+        // Status
+        typedef enum
+        {
+                SS_Success = 0,
+                SS_Error = 1,
+                SS_Timeout = 2,
+                SS_PortNotOpen = 3,
+        }
+        SerialStatus;
+        
+        // Flow Control
+        typedef enum
+        {
+                SF_None = 0,
+                SF_Hardware = 1,
+                SF_XonXoff = 2,
+        }
+        SerialFlow;
+        
+        // Parity
+        typedef enum
+        {
+                SP_None = 0,
+                SP_Odd = 1,
+                SP_Even = 2,
+        }
+        SerialParity;
+        
         SerialInterface();
         virtual ~SerialInterface();
         
-        int write(const char *buf, gsize count, gsize& bytes_written);
-        int read(char *buf, gsize count, gsize& bytes_read);
+        SerialStatus write(const char *buf, gsize count, gsize& bytes_written);
+        SerialStatus read(char *buf, gsize count, gsize& bytes_read);
         
-        int open_port();
-        int close_port();
+        SerialStatus open_port();
+        SerialStatus close_port();
         
         bool is_open();
         
@@ -78,10 +93,10 @@ public:
         unsigned long get_baud();
         int set_bits(int b);
         int get_bits();
-        int set_flow(int f);
-        int get_flow();
-        int set_parity(int p);
-        int get_parity();
+        SerialFlow set_flow(SerialFlow f);
+        SerialFlow get_flow();
+        SerialParity set_parity(SerialParity p);
+        SerialParity get_parity();
         int set_stop(int s);
         int get_stop();
         
@@ -102,7 +117,7 @@ protected:
         void select_thread();
         void launch_select_thread();
         void stop_select_thread();
-        void configure_port();
+        SerialStatus configure_port();
         
         //sigc::signal<void> signal_receive_data;
         Glib::Dispatcher signal_receive_data;
@@ -132,8 +147,8 @@ protected:
         Glib::ustring port;
         unsigned long baud;
         int bits;
-        int flow;
-        int parity;
+        SerialFlow flow;
+        SerialParity parity;
         int stop;
         
         bool debug;

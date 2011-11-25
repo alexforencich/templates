@@ -175,8 +175,8 @@ SerialInterface::SerialInterface()
         baud = 19200;
         port = "";
         bits = 8;
-        flow = SI_FLOW_NONE;
-        parity = SI_PARITY_NONE;
+        flow = SF_None;
+        parity = SP_None;
         stop = 1;
         
         debug = false;
@@ -340,14 +340,14 @@ void SerialInterface::select_thread()
         }
 }
 
-int SerialInterface::write(const char *buf, gsize count, gsize& bytes_written)
+SerialInterface::SerialStatus SerialInterface::write(const char *buf, gsize count, gsize& bytes_written)
 {
         #ifdef __WIN32
         DWORD d;
         #endif
         
         if (!is_open())
-                return SI_PORT_NOT_OPEN;
+                return SS_PortNotOpen;
         
         #ifdef __unix__
         
@@ -358,7 +358,7 @@ int SerialInterface::write(const char *buf, gsize count, gsize& bytes_written)
                 std::cerr << "Error writing serial port (errno " << errno << ")" << std::endl;
                 m_port_error.emit();
                 close_port();
-                return SI_ERROR;
+                return SS_Error;
         }
         
         #elif defined _WIN32
@@ -372,7 +372,7 @@ int SerialInterface::write(const char *buf, gsize count, gsize& bytes_written)
                 if (GetLastError() != ERROR_IO_PENDING)
                 {
                         std::cerr << "Error writing serial port (" << GetLastError() << ")" << std::endl;
-                        return SI_ERROR;
+                        return SS_Error;
                 }
                 switch (WaitForSingleObject(ov.hEvent, INFINITE))
                 {
@@ -380,16 +380,16 @@ int SerialInterface::write(const char *buf, gsize count, gsize& bytes_written)
                         if (!GetOverlappedResult(h_port, &ov, &d, TRUE))
                         {
                                 std::cerr << "Overlapped completed without result (" << GetLastError() << ")" << std::endl;
-                                return SI_ERROR;
+                                return SS_Error;
                         }
                         break;
                 case WAIT_TIMEOUT:
                         CancelIo(h_port);
                         std::cerr << "Timeout" << std::endl;
-                        return SI_ERROR;
+                        return SS_Error;
                 default:
                         std::cerr << "Unable to wait until data has been sent (" << GetLastError() << ")" << std::endl;
-                        return SI_ERROR;
+                        return SS_Error;
                 }
         }
         else
@@ -409,17 +409,17 @@ int SerialInterface::write(const char *buf, gsize count, gsize& bytes_written)
                 std::cout << std::endl;
         }
         
-        return SI_SUCCESS;
+        return SS_Success;
 }
 
-int SerialInterface::read(char *buf, gsize count, gsize& bytes_read)
+SerialInterface::SerialStatus SerialInterface::read(char *buf, gsize count, gsize& bytes_read)
 {
         #ifdef __WIN32
         DWORD d;
         #endif
         
         if (!is_open())
-                return SI_PORT_NOT_OPEN;
+                return SS_PortNotOpen;
         
         #ifdef __unix__
         
@@ -430,7 +430,7 @@ int SerialInterface::read(char *buf, gsize count, gsize& bytes_read)
                 std::cerr << "Error reading serial port (errno " << errno << ")" << std::endl;
                 m_port_error.emit();
                 close_port();
-                return SI_ERROR;
+                return SS_Error;
         }
         
         #elif defined _WIN32
@@ -444,7 +444,7 @@ int SerialInterface::read(char *buf, gsize count, gsize& bytes_read)
                 if (GetLastError() != ERROR_IO_PENDING)
                 {
                         std::cerr << "Error reading serial port (" << GetLastError() << ")" << std::endl;
-                        return SI_ERROR;
+                        return SS_Error;
                 }
                 switch (WaitForSingleObject(ov.hEvent, INFINITE))
                 {
@@ -452,16 +452,16 @@ int SerialInterface::read(char *buf, gsize count, gsize& bytes_read)
                         if (!GetOverlappedResult(h_port, &ov, &d, FALSE))
                         {
                                 std::cerr << "Overlapped completed without result (" << GetLastError() << ")" << std::endl;
-                                return SI_ERROR;
+                                return SS_Error;
                         }
                         break;
                 case WAIT_TIMEOUT:
                         CancelIo(h_port);
                         std::cerr << "Timeout" << std::endl;
-                        return SI_ERROR;
+                        return SS_Error;
                 default:
                         std::cerr << "Unable to wait until data has been read (" << GetLastError() << ")" << std::endl;
-                        return SI_ERROR;
+                        return SS_Error;
                 }
         }
         else
@@ -481,10 +481,10 @@ int SerialInterface::read(char *buf, gsize count, gsize& bytes_read)
                 std::cout << std::endl;
         }
         
-        return SI_SUCCESS;
+        return SS_Success;
 }
 
-int SerialInterface::open_port()
+SerialInterface::SerialStatus SerialInterface::open_port()
 {
         #ifdef _WIN32
         
@@ -514,7 +514,7 @@ int SerialInterface::open_port()
         if (!is_open())
         {
                 std::cerr << "Error opening port " + port << std::endl;
-                return SI_ERROR;
+                return SS_Error;
         }
         
         #ifdef __unix__
@@ -533,7 +533,7 @@ int SerialInterface::open_port()
         {
                 std::cerr << "Error setting mask!" << std::endl;
                 close_port();
-                return SI_ERROR;
+                return SS_Error;
         }
         
         memset(&dcb_serial_params, 0, sizeof(DCB));
@@ -542,7 +542,7 @@ int SerialInterface::open_port()
         if (!GetCommState(h_port, &dcb_serial_params)) {
                 std::cerr << "Error getting state!" << std::endl;
                 close_port();
-                return SI_ERROR;
+                return SS_Error;
         }
         
         memcpy(&dcb_serial_params_saved, &dcb_serial_params, sizeof(dcb_serial_params));
@@ -552,7 +552,7 @@ int SerialInterface::open_port()
         if(!GetCommTimeouts(h_port, &timeouts)){
                 std::cerr << "Error getting timeouts!" << std::endl;
                 close_port();
-                return SI_ERROR;
+                return SS_Error;
         }
         
         timeouts.ReadIntervalTimeout = MAXDWORD;
@@ -564,7 +564,7 @@ int SerialInterface::open_port()
         if(!SetCommTimeouts(h_port, &timeouts)){
                 std::cerr << "Error setting timeouts!" << std::endl;
                 close_port();
-                return SI_ERROR;
+                return SS_Error;
         }
         
         h_overlapped = CreateEvent(0, true, false, 0);
@@ -573,7 +573,7 @@ int SerialInterface::open_port()
         {
                 std::cerr << "Error creating event (1)!" << std::endl;
                 close_port();
-                return SI_ERROR;
+                return SS_Error;
         }
         
         h_overlapped_thread = CreateEvent(0, true, false, 0);
@@ -582,7 +582,7 @@ int SerialInterface::open_port()
         {
                 std::cerr << "Error creating event (2)!" << std::endl;
                 close_port();
-                return SI_ERROR;
+                return SS_Error;
         }
         
         #endif
@@ -594,10 +594,10 @@ int SerialInterface::open_port()
         
         m_port_opened.emit();
         
-        return SI_SUCCESS;
+        return SS_Success;
 }
 
-int SerialInterface::close_port()
+SerialInterface::SerialStatus SerialInterface::close_port()
 {
         if (is_open())
         {
@@ -629,13 +629,13 @@ int SerialInterface::close_port()
                 m_port_closed.emit();
         }
         
-        return SI_SUCCESS;
+        return SS_Success;
 }
 
-void SerialInterface::configure_port()
+SerialInterface::SerialStatus SerialInterface::configure_port()
 {
         if (!is_open())
-                return;
+                return SS_PortNotOpen;
         
         #ifdef __unix__
         
@@ -692,12 +692,12 @@ void SerialInterface::configure_port()
         
         switch (parity)
         {
-                case SI_PARITY_NONE:
+                case SP_None:
                         break;
-                case SI_PARITY_ODD:
+                case SP_Odd:
                         port_termios.c_cflag |= PARODD | PARENB;
                         break;
-                case SI_PARITY_EVEN:
+                case SP_Even:
                         port_termios.c_cflag |= PARENB;
                         break;
         }
@@ -718,13 +718,13 @@ void SerialInterface::configure_port()
         
         switch (flow)
         {
-                case SI_FLOW_NONE:
+                case SF_None:
                         port_termios.c_cflag |= CLOCAL;
                         break;
-                case SI_FLOW_HARDWARE:
+                case SF_Hardware:
                         port_termios.c_cflag |= CRTSCTS;
                         break;
-                case SI_FLOW_XON_XOFF:
+                case SF_XonXoff:
                         port_termios.c_iflag |= IXON | IXOFF;
                         break;
         }
@@ -786,20 +786,20 @@ void SerialInterface::configure_port()
         
         switch (parity)
         {
-                case SI_PARITY_NONE:
+                case SP_None:
                         dcb_serial_params.Parity = NOPARITY;
                         break;
-                case SI_PARITY_ODD:
+                case SP_Odd:
                         dcb_serial_params.Parity = ODDPARITY;
                         break;
-                case SI_PARITY_EVEN:
+                case SP_Even:
                         dcb_serial_params.Parity = EVENPARITY;
                         break;
         }
         
         switch (flow)
         {
-                case SI_FLOW_NONE:
+                case SF_None:
                         dcb_serial_params.fOutxCtsFlow = false;
                         dcb_serial_params.fOutxDsrFlow = false;
                         dcb_serial_params.fDtrControl = DTR_CONTROL_DISABLE;
@@ -807,7 +807,7 @@ void SerialInterface::configure_port()
                         dcb_serial_params.fInX = false;
                         dcb_serial_params.fRtsControl = DTR_CONTROL_DISABLE;
                         break;
-                case SI_FLOW_HARDWARE:
+                case SF_Hardware:
                         dcb_serial_params.fOutxCtsFlow = true;
                         dcb_serial_params.fOutxDsrFlow = true;
                         dcb_serial_params.fDtrControl = DTR_CONTROL_HANDSHAKE;
@@ -815,7 +815,7 @@ void SerialInterface::configure_port()
                         dcb_serial_params.fInX = false;
                         dcb_serial_params.fRtsControl = DTR_CONTROL_HANDSHAKE;
                         break;
-                case SI_FLOW_XON_XOFF:
+                case SF_XonXoff:
                         dcb_serial_params.fOutxCtsFlow = false;
                         dcb_serial_params.fOutxDsrFlow = false;
                         dcb_serial_params.fDtrControl = DTR_CONTROL_DISABLE;
@@ -827,9 +827,12 @@ void SerialInterface::configure_port()
         
         if(!SetCommState(h_port, &dcb_serial_params)){
                 std::cerr << "Error setting state!" << std::endl;
+                return SS_Error;
         }
         
         #endif
+        
+        return SS_Success;
 }
 
 Glib::ustring SerialInterface::set_port(Glib::ustring p)
@@ -858,6 +861,7 @@ unsigned long SerialInterface::get_baud()
 {
         return baud;
 }
+
 int SerialInterface::set_bits(int b)
 {
         if (b >= 5 && b <= 8)
@@ -873,7 +877,7 @@ int SerialInterface::get_bits()
         return bits;
 }
 
-int SerialInterface::set_flow(int f)
+SerialInterface::SerialFlow SerialInterface::set_flow(SerialFlow f)
 {
         if (f >= 0 && f <= 2)
                 flow = f;
@@ -883,12 +887,12 @@ int SerialInterface::set_flow(int f)
         return flow;
 }
 
-int SerialInterface::get_flow()
+SerialInterface::SerialFlow SerialInterface::get_flow()
 {
         return flow;
 }
 
-int SerialInterface::set_parity(int p)
+SerialInterface::SerialParity SerialInterface::set_parity(SerialParity p)
 {
         if (p >= 0 && p <= 2)
                 parity = p;
@@ -898,7 +902,7 @@ int SerialInterface::set_parity(int p)
         return parity;
 }
 
-int SerialInterface::get_parity()
+SerialInterface::SerialParity SerialInterface::get_parity()
 {
         return parity;
 }
@@ -940,26 +944,26 @@ Glib::ustring SerialInterface::get_status_string()
                 str += Glib::ustring::format(bits) + "-";
                 switch (parity)
                 {
-                        case SI_PARITY_NONE:
+                        case SP_None:
                                 str += "N-";
                                 break;
-                        case SI_PARITY_EVEN:
+                        case SP_Even:
                                 str += "E-";
                                 break;
-                        case SI_PARITY_ODD:
+                        case SP_Odd:
                                 str += "O-";
                                 break;
                 }
                 str += Glib::ustring::format(stop) + " FLOW:";
                 switch (flow)
                 {
-                        case SI_FLOW_NONE:
+                        case SF_None:
                                 str += "NONE";
                                 break;
-                        case SI_FLOW_HARDWARE:
+                        case SF_Hardware:
                                 str += "HW";
                                 break;
-                        case SI_FLOW_XON_XOFF:
+                        case SF_XonXoff:
                                 str += "SW";
                                 break;
                 }

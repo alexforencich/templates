@@ -183,7 +183,11 @@ SerialInterface::SerialInterface()
         
         running = false;
         
+        in_on_receive_data = false;
+        called_close_port = false;
+        
         signal_receive_data.connect( sigc::mem_fun(*this, &SerialInterface::on_receive_data) );
+        signal_error.connect( sigc::mem_fun(*this, &SerialInterface::on_error) );
 }
 
 SerialInterface::~SerialInterface()
@@ -193,17 +197,37 @@ SerialInterface::~SerialInterface()
 
 void SerialInterface::on_receive_data()
 {
+        in_on_receive_data = true;
+        
         {
                 Glib::Mutex::Lock lock(running_mutex);
                 if (!running)
                         return;
         }
         
-        Glib::Mutex::Lock read_lock(read_mutex);
+        {
+                Glib::Mutex::Lock read_lock(read_mutex);
+                m_port_receive_data.emit();
+                read_cond.signal();
+        }
+                
+        in_on_receive_data = false;
         
-        m_port_receive_data.emit();
+        if (called_close_port)
+                close_port();
+}
+
+void SerialInterface::on_error()
+{
+        {
+                Glib::Mutex::Lock lock(running_mutex);
+                if (!running)
+                        return;
+        }
         
-        read_cond.signal();
+        m_port_error.emit();
+        
+        close_port();
 }
 
 void SerialInterface::launch_select_thread()
@@ -273,6 +297,7 @@ void SerialInterface::select_thread()
                 if (n < 0)
                 {
                         std::cerr << "Error: select failed!" << std::endl;
+                        signal_error.emit();
                         return;
                 }
                 else if (n == 0)
@@ -311,6 +336,7 @@ void SerialInterface::select_thread()
                         if (GetLastError() != ERROR_IO_PENDING)
                         {
                                 std::cerr << "Unable to wait for COM event (" << GetLastError() << ")" << std::endl;
+                                signal_error.emit();
                                 return;
                         }
                 }
@@ -318,6 +344,7 @@ void SerialInterface::select_thread()
                 if (WaitForSingleObject(h_overlapped_thread,INFINITE) != WAIT_OBJECT_0)
                 {
                         std::cerr << "Unable to wait until COM event has arrived" << std::endl;
+                        signal_error.emit();
                         return;
                 }
                 
@@ -481,6 +508,14 @@ SerialInterface::SerialStatus SerialInterface::read(char *buf, gsize count, gsiz
                 std::cout << std::endl;
         }
         
+        if (bytes_read == 0)
+        {
+                if (debug)
+                        std::cout << "Read: End of File" << std::endl;
+                
+                return SS_EOF;
+        }
+        
         return SS_Success;
 }
 
@@ -599,6 +634,14 @@ SerialInterface::SerialStatus SerialInterface::open_port()
 
 SerialInterface::SerialStatus SerialInterface::close_port()
 {
+        if (in_on_receive_data)
+        {
+                called_close_port = true;
+                return SS_Success;
+        }
+        
+        called_close_port = false;
+        
         if (is_open())
         {
                 stop_select_thread();

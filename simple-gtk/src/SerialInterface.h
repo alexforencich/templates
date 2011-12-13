@@ -54,7 +54,8 @@ public:
                 SS_Success = 0,
                 SS_Error = 1,
                 SS_Timeout = 2,
-                SS_PortNotOpen = 3,
+                SS_EOF = 3,
+                SS_PortNotOpen = 4,
         }
         SerialStatus;
         
@@ -114,13 +115,14 @@ public:
         
 protected:
         void on_receive_data();
+        void on_error();
         void select_thread();
         void launch_select_thread();
         void stop_select_thread();
         SerialStatus configure_port();
         
-        //sigc::signal<void> signal_receive_data;
         Glib::Dispatcher signal_receive_data;
+        Glib::Dispatcher signal_error;
         
         #ifdef __unix__
         
@@ -150,6 +152,9 @@ protected:
         SerialFlow flow;
         SerialParity parity;
         int stop;
+        
+        bool in_on_receive_data;
+        bool called_close_port;
         
         bool debug;
         

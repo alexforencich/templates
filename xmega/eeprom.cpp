@@ -233,6 +233,28 @@ uint16_t EEPROM::write_block(uint16_t addr, const uint8_t *src, uint16_t len)
 }
 
 
+void EEPROM::erase_page(uint16_t addr)
+{
+        NVM.ADDR0 = addr & 0xFF;
+        NVM.ADDR1 = (addr >> 8) & 0x1F;
+        NVM.ADDR2 = 0;
+        
+        wait_for_nvm();
+        
+        NVM.CMD = NVM_CMD_ERASE_EEPROM_PAGE_gc;
+        NVM_EXEC_WRAPPER();
+}
+
+
+void EEPROM::erase_all()
+{
+        wait_for_nvm();
+        
+        NVM.CMD = NVM_CMD_ERASE_EEPROM_gc;
+        NVM_EXEC_WRAPPER();
+}
+
+
 void (EEPROM::putc)(char c)
 {
         write_byte(current_address++, c);

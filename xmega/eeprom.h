@@ -71,6 +71,9 @@ public:
         static uint16_t read_block(uint16_t addr, uint8_t *dest, uint16_t len);
         static uint16_t write_block(uint16_t addr, const uint8_t *src, uint16_t len);
         
+        static void erase_page(uint16_t addr);
+        static void erase_all();
+        
         // Note: extra parentheses needed to prevent
         // avr-libc stdio macro expansion
         static void (putc)(char c);

@@ -94,6 +94,10 @@ private:
         size_t rxbuf_size;
         size_t rxbuf_head;
         size_t rxbuf_tail;
+        PORT_t *rtsport;
+        PORT_t *ctsport;
+        uint8_t rtspin_bm;
+        uint8_t ctspin_bm;
         
         char flags;
         
@@ -103,6 +107,8 @@ private:
         // Private methods
         void recv();
         void xmit();
+        
+        void update_rts();
         
         // Private static methods
         static char which_usart(USART_t *_usart);
@@ -119,6 +125,11 @@ public:
         
         void set_tx_buffer(char *_txbuf, size_t _txbuf_size);
         void set_rx_buffer(char *_rxbuf, size_t _rxbuf_size);
+        
+        void set_rts_pin(PORT_t *_rtsport, int _rtspin);
+        void set_cts_pin(PORT_t *_ctsport, int _ctspin);
+        
+        void check_cts();
         
         void begin(long baud);
         void end();

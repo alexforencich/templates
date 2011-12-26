@@ -210,6 +210,10 @@ Usart::Usart(USART_t *_usart) :
         rxbuf_size(0),
         rxbuf_head(0),
         rxbuf_tail(0),
+        rtsport(0),
+        ctsport(0),
+        rtspin_bm(0),
+        ctspin_bm(0),
         flags(USART_TX_QUEUE_FULL | USART_RX_QUEUE_FULL)
 {
         usart_ind = which_usart(_usart);
@@ -244,6 +248,67 @@ void Usart::set_rx_buffer(char *_rxbuf, size_t _rxbuf_size)
         rxbuf_tail = 0;
         flags &= ~USART_RX_QUEUE_FULL;
         flags |= USART_RX_QUEUE_EMPTY;
+}
+
+
+void Usart::set_rts_pin(PORT_t *_rtsport, int _rtspin)
+{
+        rtsport = _rtsport;
+        rtspin_bm = 1 << _rtspin;
+        rtsport->DIRSET = rtspin_bm;
+        
+}
+
+
+void Usart::set_cts_pin(PORT_t *_ctsport, int _ctspin)
+{
+        ctsport = _ctsport;
+        ctspin_bm = 1 << _ctspin;
+        ctsport->DIRCLR = ctspin_bm;
+}
+
+void Usart::update_rts()
+{
+        if (rtsport == 0)
+                return;
+        if (txbuf_size == 0)
+        {
+                // no buffer, so just assert it
+                rtsport->OUTCLR = rtspin_bm;
+        }
+        else
+        {
+                int cnt = txbuf_head - txbuf_tail;
+                if (cnt < 0 || flags & USART_TX_QUEUE_FULL)
+                        cnt += txbuf_size;
+                // define 'getting full' as 3/4
+                if (cnt > ((txbuf_size >> 1) + (txbuf_size >> 2)))
+                {
+                        rtsport->OUTSET = rtspin_bm;
+                }
+                else
+                {
+                        rtsport->OUTCLR = rtspin_bm;
+                }
+        }
+}
+
+
+void Usart::check_cts()
+{
+        if (ctsport == 0)
+                return;
+        if (ctsport->IN & ctspin_bm)
+        {
+                // deasserted, disable transmit
+                usart->CTRLA &= ~USART_DREINTLVL_gm;
+        }
+        else
+        {
+                // asserted, enable transmit
+                if (!(flags & USART_TX_QUEUE_EMPTY))
+                        usart->CTRLA |= USART_DREINTLVL_MED_gc;
+        }
 }
 
 
@@ -363,6 +428,7 @@ void Usart::recv()
                         if (rxbuf_head == rxbuf_tail)
                                 flags |= USART_RX_QUEUE_FULL;
                 }
+                update_rts();
         }
 }
 
@@ -461,6 +527,8 @@ char (Usart::getc)()
                 rxbuf_tail = 0;
         if (rxbuf_head == rxbuf_tail)
                 flags |= USART_RX_QUEUE_EMPTY;
+        
+        update_rts();
         
         SREG = saved_status;
         

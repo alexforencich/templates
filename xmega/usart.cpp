@@ -278,11 +278,8 @@ void Usart::update_rts()
         }
         else
         {
-                int cnt = txbuf_head - txbuf_tail;
-                if (cnt < 0 || flags & USART_TX_QUEUE_FULL)
-                        cnt += txbuf_size;
                 // define 'getting full' as 3/4
-                if (cnt > ((txbuf_size >> 1) + (txbuf_size >> 2)))
+                if (available() > ((rxbuf_size >> 1) + (rxbuf_size >> 2)))
                 {
                         rtsport->OUTSET = rtspin_bm;
                 }

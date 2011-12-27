@@ -17,3 +17,55 @@ Included Libraries:
   * I2C/TWI
 
 
+
+Compiling (Linux)
+
+Requirements
+
+* binutils-avr
+* avr-gcc
+* libc-avr
+* avrdude
+
+Procedure
+
+1. Install required packages
+
+2. Edit makefile for device and programmer settings
+
+3. Build
+
+ $ make
+
+4. Program
+
+ $ make program
+
+
+
+Compiling (Windows)
+
+Requirements
+
+* binutils-avr
+* avr-gcc
+* libc-avr
+* avrdude
+
+Procedure
+
+1. Install software
+
+ * Install WinAVR from http://sourceforge.net/projects/winavr/files/WinAVR/20100110/
+
+2. Edit makefile for device and programmer settings
+
+3. Build
+
+ > make
+
+4. Program
+
+ > make program
+
+

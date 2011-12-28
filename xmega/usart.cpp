@@ -540,6 +540,10 @@ int Usart::ungetc(int c)
         if (c == EOF || flags & USART_RX_QUEUE_FULL || (!(SREG & CPU_I_bm) && (flags & USART_RX_QUEUE_FULL)))
                 return EOF;
         
+        // return EOF if no buffer
+        if (rxbuf_size == 0)
+                return EOF;
+        
         saved_status = SREG;
         cli();
         

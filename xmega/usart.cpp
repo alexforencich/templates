@@ -533,6 +533,33 @@ char (Usart::getc)()
 }
 
 
+int Usart::peekc(size_t index)
+{
+        uint8_t saved_status = 0;
+        char c;
+        
+        if (!(flags & USART_RUNNING) || (flags & USART_RX_QUEUE_EMPTY))
+                return EOF;
+        
+        // return EOF if invalid index
+        if (index >= rxbuf_size)
+                return EOF;
+        
+        saved_status = SREG;
+        cli();
+        
+        index += rxbuf_tail;
+        if (index >= rxbuf_size)
+                index -= rxbuf_size;
+        
+        c = rxbuf[index];
+        
+        SREG = saved_status;
+        
+        return c;
+}
+
+
 int Usart::ungetc(int c)
 {
         uint8_t saved_status = 0;

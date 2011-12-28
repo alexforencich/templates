@@ -142,6 +142,7 @@ public:
         
         int available();
         char (getc)();
+        int peekc(size_t index = 0);
         int ungetc(int c);
         void gets(char *dest);
         int read(void *dest, int num);

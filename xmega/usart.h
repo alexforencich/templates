@@ -138,14 +138,14 @@ public:
         // avr-libc stdio macro expansion
         void (putc)(char c);
         void puts(const char *str);
-        int write(const void *ptr, int num);
+        size_t write(const void *ptr, size_t num);
         
-        int available();
+        size_t available();
         char (getc)();
         int peekc(size_t index = 0);
         int ungetc(int c);
         void gets(char *dest);
-        int read(void *dest, int num);
+        size_t read(void *dest, size_t num);
         
         void setup_stream(FILE *stream);
         

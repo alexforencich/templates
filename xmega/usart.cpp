@@ -482,9 +482,9 @@ void Usart::puts(const char *str)
 }
 
 
-int Usart::write(const void *ptr, int num)
+size_t Usart::write(const void *ptr, size_t num)
 {
-        int j = num;
+        size_t j = num;
         const char *ptr2 = (const char *)ptr;
         if (num == 0 || ptr2 == 0)
                 return 0;
@@ -496,7 +496,7 @@ int Usart::write(const void *ptr, int num)
 }
 
 
-int Usart::available()
+size_t Usart::available()
 {
         int cnt = rxbuf_head - rxbuf_tail;
         if (cnt < 0 || flags & USART_RX_QUEUE_FULL)
@@ -597,9 +597,9 @@ void Usart::gets(char *dest)
 }
 
 
-int Usart::read(void *dest, int num)
+size_t Usart::read(void *dest, size_t num)
 {
-        int j = num;
+        size_t j = num;
         char *ptr2 = (char *)dest;
         if (num == 0 || ptr2 == 0)
                 return 0;

@@ -161,7 +161,7 @@ char Spi::transceive(char c)
 }
 
 
-void (Spi::putc)(char c)
+void Spi::put(char c)
 {
         uint8_t saved_status = 0;
         
@@ -170,25 +170,6 @@ void (Spi::putc)(char c)
         
         spi->DATA = c;
         SPI_WAIT();
-        
-        SREG = saved_status;
-}
-
-
-void Spi::puts(const char *str)
-{
-        uint8_t saved_status = 0;
-        
-        saved_status = SREG;
-        cli();
-        
-        char next = *(str++);
-        while (next)
-        {
-                spi->DATA = next;
-                next = *(str++);
-                SPI_WAIT();
-        }
         
         SREG = saved_status;
 }
@@ -264,57 +245,9 @@ void Spi::write_dword(uint32_t dword)
 }
 
 
-int Spi::write(const void *ptr, int num)
-{
-        int j = num;
-        const char *ptr2 = (const char *)ptr;
-        char next = *(ptr2++);
-        uint8_t saved_status = 0;
-        
-        saved_status = SREG;
-        cli();
-        
-        if (num == 0 || ptr2 == 0)
-                return 0;
-        while (num--)
-        {
-                spi->DATA = next;
-                next = *(ptr2++);
-                SPI_WAIT();
-        }
-        
-        SREG = saved_status;
-        return j;
-}
-
-
-char (Spi::getc)()
+char Spi::get()
 {
         return transceive(0);
-}
-
-
-void Spi::gets(char *dest)
-{
-        do
-        {
-                *(dest++) = (getc)();
-        }
-        while (*(dest-1) != 0 && *(dest-1) != '\n');
-}
-
-
-int Spi::read(void *dest, int num)
-{
-        int j = num;
-        char *ptr2 = (char *)dest;
-        if (num == 0 || ptr2 == 0)
-                return 0;
-        while (num--)
-        {
-                *(ptr2++) = (getc)();
-        }
-        return j;
 }
 
 
@@ -332,7 +265,7 @@ int Spi::put(char c, FILE *stream)
         u = (Spi *)fdev_get_udata(stream);
         if (u != 0)
         {
-                (u->putc)(c);
+                u->put(c);
                 return 0;
         }
         return _FDEV_ERR;
@@ -346,7 +279,7 @@ int Spi::get(FILE *stream)
         u = (Spi *)fdev_get_udata(stream);
         if (u != 0)
         {
-                return (u->getc)();
+                return u->get();
         }
         return _FDEV_ERR;
 }

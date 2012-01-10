@@ -462,7 +462,7 @@ void Usart::xmit()
 }
 
 
-void (Usart::putc)(char c)
+void Usart::put(char c)
 {
         uint8_t saved_status = 0;
         
@@ -495,29 +495,6 @@ void (Usart::putc)(char c)
 }
 
 
-void Usart::puts(const char *str)
-{
-        while (*str)
-        {
-                (putc)(*(str++));
-        }
-}
-
-
-size_t Usart::write(const void *ptr, size_t num)
-{
-        size_t j = num;
-        const char *ptr2 = (const char *)ptr;
-        if (num == 0 || ptr2 == 0)
-                return 0;
-        while (num--)
-        {
-                (putc)(*(ptr2++));
-        }
-        return j;
-}
-
-
 size_t Usart::available()
 {
         int cnt = rxbuf_head - rxbuf_tail;
@@ -527,7 +504,7 @@ size_t Usart::available()
 }
 
 
-char (Usart::getc)()
+char Usart::get()
 {
         uint8_t saved_status = 0;
         char c;
@@ -616,30 +593,6 @@ int Usart::ungetc(int c)
 }
 
 
-void Usart::gets(char *dest)
-{
-        do
-        {
-                *(dest++) = (getc)();
-        }
-        while (*(dest-1) != 0 && *(dest-1) != '\n');
-}
-
-
-size_t Usart::read(void *dest, size_t num)
-{
-        size_t j = num;
-        char *ptr2 = (char *)dest;
-        if (num == 0 || ptr2 == 0)
-                return 0;
-        while (num--)
-        {
-                *(ptr2++) = (getc)();
-        }
-        return j;
-}
-
-
 void Usart::setup_stream(FILE *stream)
 {
         fdev_setup_stream(stream, put, get, _FDEV_SETUP_RW);
@@ -654,7 +607,7 @@ int Usart::put(char c, FILE *stream)
         u = (Usart *)fdev_get_udata(stream);
         if (u != 0)
         {
-                (u->putc)(c);
+                u->put(c);
                 return 0;
         }
         return _FDEV_ERR;
@@ -668,7 +621,7 @@ int Usart::get(FILE *stream)
         u = (Usart *)fdev_get_udata(stream);
         if (u != 0)
         {
-                return (u->getc)();
+                return u->get();
         }
         return _FDEV_ERR;
 }

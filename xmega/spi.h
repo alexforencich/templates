@@ -37,6 +37,8 @@
 
 #include <stdio.h>
 
+#include "iostream.h"
+
 // Defines
 #define SPIC_IND 1
 #define SPID_IND 2
@@ -68,7 +70,7 @@
 #define SPI_WAIT() while (!(spi->STATUS & SPI_IF_bm)) { }
 
 // Spi class
-class Spi
+class Spi : public IOStream
 {
 private:
         // Per object data
@@ -101,15 +103,11 @@ public:
         
         // Note: extra parentheses needed to prevent
         // avr-libc stdio macro expansion
-        void (putc)(char c);
-        void puts(const char *str);
+        void put(char c);
         void write_word(uint16_t word);
         void write_dword(uint32_t dword);
-        int write(const void *ptr, int num);
         
-        char (getc)();
-        void gets(char *dest);
-        int read(void *dest, int num);
+        char get();
         
         void setup_stream(FILE *stream);
         

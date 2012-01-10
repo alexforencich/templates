@@ -37,6 +37,8 @@
 
 #include <stdio.h>
 
+#include "iostream.h"
+
 // token pasting
 #define token_paste2_int(x, y) x ## y
 #define token_paste2(x, y) token_paste2_int(x, y)
@@ -80,7 +82,7 @@
 //#define USART_CREATE_ALL_ISR
 
 // Usart class
-class Usart
+class Usart : public IOStream
 {
 private:
         // Per object data
@@ -134,18 +136,12 @@ public:
         void begin(long baud);
         void end();
         
-        // Note: extra parentheses needed to prevent
-        // avr-libc stdio macro expansion
-        void (putc)(char c);
-        void puts(const char *str);
-        size_t write(const void *ptr, size_t num);
+        void put(char c);
         
         size_t available();
-        char (getc)();
+        char get();
         int peekc(size_t index = 0);
         int ungetc(int c);
-        void gets(char *dest);
-        size_t read(void *dest, size_t num);
         
         void setup_stream(FILE *stream);
         

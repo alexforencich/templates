@@ -180,7 +180,7 @@ int main(void)
         
         LED_PORT.OUT = 0x01;
         
-        usart.puts("Hello World\n");
+        usart.write_string("Hello World\n");
         
         fprintf_P(&usart_stream, PSTR("x = %d"), 5);
         

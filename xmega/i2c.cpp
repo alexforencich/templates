@@ -139,7 +139,10 @@ void __attribute__ ((noinline)) I2c::begin(uint32_t baud)
 void __attribute__ ((noinline)) I2c::end()
 {
         twi->MASTER.CTRLA = 0;
+        
+        flags = 0;
 }
+
 
 void I2c::start_write(uint8_t addr)
 {
@@ -155,6 +158,7 @@ void I2c::start_write(uint8_t addr)
         I2C_WAIT_WRITE_MASTER();
 }
 
+
 void I2c::start_read(uint8_t addr)
 {
         if (flags & I2C_STATE_ACTIVE)
@@ -169,6 +173,7 @@ void I2c::start_read(uint8_t addr)
         I2C_WAIT_READ_MASTER();
 }
 
+
 void I2c::stop()
 {
         if (flags & I2C_STATE_ACTIVE)
@@ -178,7 +183,8 @@ void I2c::stop()
         }
 }
 
-void (I2c::putc)(char c)
+
+void I2c::put(char c)
 {
         if (flags & I2C_STATE_ACTIVE)
         {
@@ -188,7 +194,8 @@ void (I2c::putc)(char c)
         }
 }
 
-char (I2c::getc)()
+
+char I2c::get()
 {
         char c = 0;
         if (flags & I2C_STATE_ACTIVE)
@@ -203,48 +210,6 @@ char (I2c::getc)()
         return c;
 }
 
-void I2c::puts(const char *s)
-{
-        while (*s)
-        {
-                (putc)(*s);
-        }
-}
-
-void I2c::gets(char *s)
-{
-        char c = 0;
-        do {
-                c = (getc)();
-                *(s++) = c;
-        } while (c);
-}
-
-int I2c::write(const void *ptr, int num)
-{
-        int j = num;
-        const char *ptr2 = (const char *)ptr;
-        if (num == 0 || ptr2 == 0)
-                return 0;
-        while (num--)
-        {
-                (putc)(*(ptr2++));
-        }
-        return j;
-}
-
-int I2c::read(void *dest, int num)
-{
-        int j = num;
-        char *ptr2 = (char *)dest;
-        if (num == 0 || ptr2 == 0)
-                return 0;
-        while (num--)
-        {
-                *(ptr2++) = (getc)();
-        }
-        return j;
-}
 
 void I2c::setup_stream(FILE *stream)
 {
@@ -260,7 +225,7 @@ int I2c::put(char c, FILE *stream)
         u = (I2c *)fdev_get_udata(stream);
         if (u != 0)
         {
-                (u->putc)(c);
+                u->put(c);
                 return 0;
         }
         return _FDEV_ERR;
@@ -274,7 +239,7 @@ int I2c::get(FILE *stream)
         u = (I2c *)fdev_get_udata(stream);
         if (u != 0)
         {
-                return (u->getc)();
+                return u->get();
         }
         return _FDEV_ERR;
 }

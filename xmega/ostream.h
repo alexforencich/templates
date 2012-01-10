@@ -1,7 +1,7 @@
 /************************************************************************/
-/* XMEGA I2C Driver                                                     */
+/* OStream Output Stream                                                */
 /*                                                                      */
-/* i2c.h                                                                */
+/* ostream.h                                                            */
 /*                                                                      */
 /* Alex Forencich <alex@alexforencich.com>                              */
 /*                                                                      */
@@ -29,87 +29,26 @@
 /*                                                                      */
 /************************************************************************/
 
-#ifndef __I2C_H
-#define __I2C_H
-
-#include <avr/io.h>
-#include <avr/interrupt.h>
+#ifndef __OUTPUT_STREAM_H
+#define __OUTPUT_STREAM_H
 
 #include <stdio.h>
 
-#include "iostream.h"
-
-// Defines
-#define TWIC_IND 1
-#define TWIE_IND 2
-#define TWID_IND 3
-#define TWIF_IND 4
-
-#if defined(TWIF)
-#define MAX_TWI_IND 4
-#else
-#define MAX_TWI_IND 2
-#endif
-
-#define I2C_MODE_MASTER         0x00
-#define I2C_MODE_SLAVE          0x80
-#define I2C_STATE_IDLE          0x00
-#define I2C_STATE_ACTIVE        0x01
-
-#define I2C_WAIT_WRITE_MASTER() while (!(twi->MASTER.STATUS & TWI_MASTER_WIF_bm)) { }
-#define I2C_WAIT_READ_MASTER() while (!(twi->MASTER.STATUS & TWI_MASTER_RIF_bm)) { }
-
-
-// I2c class
-class I2c : public IOStream
+// OStream class
+class OStream
 {
-private:
-        // Per object data
-        TWI_t *twi;
-        int twi_ind;
-        
-        char flags;
-        
-        // Static data
-        static I2c *i2c_list[MAX_TWI_IND];
-        
-        // Private methods
-        
-        // Private static methods
-        static char which_twi(TWI_t *_twi);
-        static TWI_t *get_twi(char _twi);
-        static PORT_t *get_port(char _twi);
-        
 public:
-        // Public variables
-        
         // Public methods
-        I2c(TWI_t *_twi);
-        ~I2c();
+        virtual void put(char c);
+        virtual void write_string(const char *str);
+        virtual size_t write(const void *ptr, size_t num);
         
-        void begin(uint32_t baud);
-        void end();
-        
-        void start_write(uint8_t addr);
-        void start_read(uint8_t addr);
-        void stop();
-        
-        void put(char c);
-        
-        char get();
-        
-        void setup_stream(FILE *stream);
-        
-        // Static methods
-        static int put(char c, FILE *stream);
-        static int get(FILE *stream);
-        
-        //static inline void handle_interrupts(char _usart);
-        //static void handle_interrupts(Usart *_usart);
 };
 
 // Prototypes
 
 
-#endif // __I2C_H
+#endif // __OUTPUT_STREAM_H
+
+
 

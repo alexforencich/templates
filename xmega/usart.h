@@ -99,7 +99,7 @@ private:
         uint8_t rtspin_bm;
         uint8_t ctspin_bm;
         
-        char flags;
+        volatile char flags;
         
         // Static data
         static Usart *usart_list[MAX_USART_IND];

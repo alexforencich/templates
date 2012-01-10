@@ -94,13 +94,13 @@ public:
         
         // Note: extra parentheses needed to prevent
         // avr-libc stdio macro expansion
-        void (putc)(char c, uint8_t stop);
-        void puts(const char *str, uint8_t stop);
-        int write(const void *ptr, int num, uint8_t stop);
+        void (putc)(char c);
+        void puts(const char *str);
+        int write(const void *ptr, int num);
         
-        char (getc)(uint8_t stop);
-        void gets(char *dest, uint8_t stop);
-        int read(void *dest, int num, uint8_t stop);
+        char (getc)();
+        void gets(char *dest);
+        int read(void *dest, int num);
         
         void setup_stream(FILE *stream);
         

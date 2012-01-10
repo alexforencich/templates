@@ -178,63 +178,49 @@ void I2c::stop()
         }
 }
 
-void (I2c::putc)(char c, uint8_t stop)
+void (I2c::putc)(char c)
 {
         if (flags & I2C_STATE_ACTIVE)
         {
                 twi->MASTER.DATA = c;
                 twi->MASTER.CTRLC = TWI_MASTER_CMD_RECVTRANS_gc;
                 I2C_WAIT_WRITE_MASTER();
-                if (stop)
-                {
-                        twi->MASTER.CTRLC = TWI_MASTER_CMD_STOP_gc | TWI_MASTER_ACKACT_bm;
-                        flags &= ~I2C_STATE_ACTIVE;
-                }
         }
 }
 
-char (I2c::getc)(uint8_t stop)
+char (I2c::getc)()
 {
         char c = 0;
         if (flags & I2C_STATE_ACTIVE)
         {
-                c = twi->MASTER.DATA;
-                if (!stop)
+                if (!(twi->MASTER.STATUS & TWI_MASTER_RIF_bm))
                 {
                         twi->MASTER.CTRLC = TWI_MASTER_CMD_RECVTRANS_gc;
                         I2C_WAIT_READ_MASTER();
                 }
-                else
-                {
-                        twi->MASTER.CTRLC = TWI_MASTER_CMD_STOP_gc | TWI_MASTER_ACKACT_bm;
-                        flags &= ~I2C_STATE_ACTIVE;
-                }
+                c = twi->MASTER.DATA;
         }
         return c;
 }
 
-void I2c::puts(const char *s, uint8_t stop)
+void I2c::puts(const char *s)
 {
         while (*s)
         {
-                (putc)(*s, *(s+1) ? 0 : stop);
+                (putc)(*s);
         }
 }
 
-void I2c::gets(char *s, uint8_t stop)
+void I2c::gets(char *s)
 {
         char c = 0;
         do {
-                c = (getc)(0);
+                c = (getc)();
                 *(s++) = c;
         } while (c);
-        if (stop)
-        {
-                (getc)(1);
-        }
 }
 
-int I2c::write(const void *ptr, int num, uint8_t stop)
+int I2c::write(const void *ptr, int num)
 {
         int j = num;
         const char *ptr2 = (const char *)ptr;
@@ -242,12 +228,12 @@ int I2c::write(const void *ptr, int num, uint8_t stop)
                 return 0;
         while (num--)
         {
-                (putc)(*(ptr2++), num == 0 ? stop : 0);
+                (putc)(*(ptr2++));
         }
         return j;
 }
 
-int I2c::read(void *dest, int num, uint8_t stop)
+int I2c::read(void *dest, int num)
 {
         int j = num;
         char *ptr2 = (char *)dest;
@@ -255,7 +241,7 @@ int I2c::read(void *dest, int num, uint8_t stop)
                 return 0;
         while (num--)
         {
-                *(ptr2++) = (getc)(num == 0 ? stop : 0);
+                *(ptr2++) = (getc)();
         }
         return j;
 }
@@ -274,7 +260,7 @@ int I2c::put(char c, FILE *stream)
         u = (I2c *)fdev_get_udata(stream);
         if (u != 0)
         {
-                (u->putc)(c, 0);
+                (u->putc)(c);
                 return 0;
         }
         return _FDEV_ERR;
@@ -288,7 +274,7 @@ int I2c::get(FILE *stream)
         u = (I2c *)fdev_get_udata(stream);
         if (u != 0)
         {
-                return (u->getc)(0);
+                return (u->getc)();
         }
         return _FDEV_ERR;
 }

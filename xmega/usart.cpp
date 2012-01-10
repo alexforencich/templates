@@ -248,6 +248,12 @@ void Usart::set_rx_buffer(char *_rxbuf, size_t _rxbuf_size)
         rxbuf_tail = 0;
         flags &= ~USART_RX_QUEUE_FULL;
         flags |= USART_RX_QUEUE_EMPTY;
+        
+        if (flags & USART_RUNNING)
+        {
+                usart->CTRLA &= ~USART_RXCINTLVL_gm;
+                usart->CTRLA |= USART_RXCINTLVL_MED_gc;
+        }
 }
 
 
@@ -397,7 +403,15 @@ void __attribute__ ((noinline)) Usart::begin(long baud)
                 usart->CTRLB = USART_RXEN_bm | USART_TXEN_bm;
         }
         
-        usart->CTRLA = USART_RXCINTLVL_MED_gc;
+        if (rxbuf_size > 0)
+        {
+                usart->CTRLA = USART_RXCINTLVL_MED_gc;
+        }
+        else
+        {
+                usart->CTRLA = 0;
+        }
+        
         flags |= USART_RUNNING;
 }
 
@@ -454,6 +468,14 @@ void (Usart::putc)(char c)
         
         if (!(flags & USART_RUNNING) || (!(SREG & CPU_I_bm) && (flags & USART_TX_QUEUE_FULL)))
                 return;
+        
+        // blocking read if no buffer
+        if (txbuf_size == 0)
+        {
+                while (!(usart->STATUS & USART_DREIF_bm)) { };
+                usart->DATA = c;
+                return;
+        }
         
         while (flags & USART_TX_QUEUE_FULL) { };
         
@@ -512,6 +534,13 @@ char (Usart::getc)()
         
         if (!(flags & USART_RUNNING) || (!(SREG & CPU_I_bm) && (flags & USART_RX_QUEUE_EMPTY)))
                 return 0;
+        
+        // blocking read if no buffer
+        if (rxbuf_size == 0)
+        {
+                while (!(usart->STATUS & USART_RXCIF_bm)) { };
+                return usart->DATA;
+        }
         
         while (flags & USART_RX_QUEUE_EMPTY) { };
         

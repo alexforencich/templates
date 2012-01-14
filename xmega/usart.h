@@ -101,6 +101,8 @@ private:
         uint8_t rtspin_bm;
         uint8_t ctspin_bm;
         
+        uint8_t nonblocking;
+        
         volatile char flags;
         
         // Static data
@@ -130,6 +132,8 @@ public:
         
         void set_rts_pin(PORT_t *_rtsport, int _rtspin);
         void set_cts_pin(PORT_t *_ctsport, int _ctspin);
+        
+        void set_nonblocking(uint8_t nb);
         
         void check_cts();
         

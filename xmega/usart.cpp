@@ -214,6 +214,7 @@ Usart::Usart(USART_t *_usart) :
         ctsport(0),
         rtspin_bm(0),
         ctspin_bm(0),
+        nonblocking(0),
         flags(USART_TX_QUEUE_FULL | USART_RX_QUEUE_FULL)
 {
         usart_ind = which_usart(_usart);
@@ -272,6 +273,13 @@ void Usart::set_cts_pin(PORT_t *_ctsport, int _ctspin)
         ctspin_bm = 1 << _ctspin;
         ctsport->DIRCLR = ctspin_bm;
 }
+
+
+void Usart::set_nonblocking(uint8_t nb)
+{
+        nonblocking = nb;
+}
+
 
 void Usart::update_rts()
 {
@@ -477,6 +485,10 @@ void Usart::put(char c)
                 return;
         }
         
+        // return if nonblocking
+        if ((flags & USART_TX_QUEUE_FULL) && nonblocking)
+                return;
+        
         while (flags & USART_TX_QUEUE_FULL) { };
         
         saved_status = SREG;
@@ -518,6 +530,10 @@ char Usart::get()
                 while (!(usart->STATUS & USART_RXCIF_bm)) { };
                 return usart->DATA;
         }
+        
+        // return if nonblocking
+        if ((flags & USART_RX_QUEUE_EMPTY) && nonblocking)
+                return 0;
         
         while (flags & USART_RX_QUEUE_EMPTY) { };
         

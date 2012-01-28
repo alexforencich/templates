@@ -12,3 +12,79 @@ Included Libraries:
   * Cross-platform serial port
 
 
+
+Compiling (Linux)
+
+Requirements
+
+* gtkmm >= 2.28.0
+
+Procedure
+
+1. Install required packages
+
+2. If no configure script present, run bootstrap
+
+ $ ./bootstrap
+
+3. Run configure script
+
+ $ ./configure
+
+4. Build
+
+ $ make
+
+5. Install
+
+ $ make install
+
+
+
+Compiling (Windows) (mingw)
+
+Requirements
+
+* mingw
+* msys
+* gtkmm >= 2.22.0
+
+Procedure
+
+1. Install MinGW, MSYS, and gtkmm
+
+ * Install MinGW and MSYS
+   * Download from http://sourceforge.net/projects/mingw/files/Installer/mingw-get-inst/
+   * Install C compiler, C++ compiler, MSYS, and Developer Toolkit
+   * Add MinGW and MSYS directories to path
+      (Windows 7) Right click on Computer -> Properties, click Advanced System Settings
+      (Other) Right cick on Computer -> Properties
+      (All) On Advanced tab, select Environment Variables
+      Under user variables, select PATH and click Edit.  If PATH does not exist, click New,
+        enter PATH for name, and omit leading semicolon in next step.
+      Add ;C:\MinGW\bin;C:\MinGW\msys\1.0\bin to the end of value
+      Click OK x3
+      Open a command prompt, type bash and hit enter.  You should see: bash-3.1$
+ * Install gtkmm
+   * Download from http://ftp.gnome.org/pub/GNOME/binaries/win32/gtkmm/
+   * Install
+   * Add ACLOCAL_FLAGS environment variable with the value:
+     -I /c/gtkmm/share/aclocal
+
+2. If no configure script present, run bootstrap
+
+ $ ./bootstrap
+
+3. Run configure script
+
+ $ ./configure
+
+4. Build
+
+ $ make
+
+5. Install
+
+ $ make install
+
+

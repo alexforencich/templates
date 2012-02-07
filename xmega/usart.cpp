@@ -421,6 +421,8 @@ void __attribute__ ((noinline)) Usart::begin(long baud)
         }
         
         flags |= USART_RUNNING;
+        
+        update_rts();
 }
 
 

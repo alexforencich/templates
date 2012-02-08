@@ -32,9 +32,21 @@
 #include "istream.h"
 
 
+size_t IStream::available()
+{
+        return 0;
+}
+
+
 char IStream::get()
 {
         return 0;
+}
+
+
+int IStream::peek(size_t index)
+{
+        return EOF;
 }
 
 

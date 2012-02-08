@@ -144,7 +144,7 @@ public:
         
         size_t available();
         char get();
-        int peekc(size_t index = 0);
+        int peek(size_t index = 0);
         int ungetc(int c);
         
         void setup_stream(FILE *stream);

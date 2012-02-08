@@ -557,7 +557,7 @@ char Usart::get()
 }
 
 
-int Usart::peekc(size_t index)
+int Usart::peek(size_t index)
 {
         uint8_t saved_status = 0;
         char c;

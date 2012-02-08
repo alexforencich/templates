@@ -39,7 +39,9 @@ class IStream
 {
 public:
         // Public methods
+        virtual size_t available();
         virtual char get();
+        virtual int peek(size_t index = 0);
         virtual void read_string(char *dest);
         virtual size_t read(void *dest, size_t num);
         

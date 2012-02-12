@@ -1,0 +1,69 @@
+ATMEL AVR ATmega template (avr-gcc)
+
+This is a basic template project for an Atmel AVR atmega microcontroller.  The
+template includes libraries for several common peripherals.  It uses the
+avr-gcc toolchain and the avrdude programmer.  
+
+For more information and updates:
+http://alexforencich.com/wiki/en/templates/atmega
+
+GitHub repository:
+https://github.com/alexforencich/templates
+
+Included Libraries:
+  * Usart
+  * I2C/TWI
+
+
+
+Compiling (Linux)
+
+Requirements
+
+* binutils-avr
+* avr-gcc
+* libc-avr
+* avrdude
+
+Procedure
+
+1. Install required packages
+
+2. Edit makefile for device and programmer settings
+
+3. Build
+
+ $ make
+
+4. Program
+
+ $ make program
+
+
+
+Compiling (Windows)
+
+Requirements
+
+* binutils-avr
+* avr-gcc
+* libc-avr
+* avrdude
+
+Procedure
+
+1. Install software
+
+ * Install WinAVR from http://sourceforge.net/projects/winavr/files/WinAVR/20100110/
+
+2. Edit makefile for device and programmer settings
+
+3. Build
+
+ > make
+
+4. Program
+
+ > make program
+
+

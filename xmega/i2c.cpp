@@ -1,5 +1,5 @@
 /************************************************************************/
-/* XMEGA I2C Driver                                                     */
+/* I2C Driver                                                           */
 /*                                                                      */
 /* i2c.cpp                                                              */
 /*                                                                      */
@@ -33,8 +33,12 @@
 
 
 // Statics
-I2c *I2c::i2c_list[MAX_TWI_IND];
+#ifdef __AVR_XMEGA__
+I2c *I2c::i2c_list[MAX_TWI_IND-1];
+#endif // __AVR_XMEGA__
 
+
+#ifdef __AVR_XMEGA__
 
 char __attribute__ ((noinline)) I2c::which_twi(TWI_t *_twi)
 {
@@ -54,7 +58,7 @@ char __attribute__ ((noinline)) I2c::which_twi(TWI_t *_twi)
         if ((uintptr_t)_twi == (uintptr_t)&TWIF)
                 return TWIF_IND;
 #endif
-        return 0;
+        return -1;
 }
 
 
@@ -109,19 +113,29 @@ PORT_t * __attribute__ ((noinline)) I2c::get_port(char _twi)
         }
 }
 
+#endif // __AVR_XMEGA__
+
+#ifdef __AVR_XMEGA__
 I2c::I2c(TWI_t *_twi) :
         twi(_twi),
+#else // __AVR_XMEGA__
+I2c::I2c() :
+#endif // __AVR_XMEGA__
         flags(0)
 {
+#ifdef __AVR_XMEGA__
         twi_ind = which_twi(twi);
         i2c_list[twi_ind-1] = this;
+#endif // __AVR_XMEGA__
 }
 
 
 I2c::~I2c()
 {
         end();
+#ifdef __AVR_XMEGA__
         i2c_list[twi_ind-1] = 0;
+#endif // __AVR_XMEGA__
 }
 
 
@@ -129,16 +143,45 @@ void __attribute__ ((noinline)) I2c::begin(uint32_t baud)
 {
         flags = I2C_MODE_MASTER;
         
+#ifdef __AVR_XMEGA__
         twi->MASTER.CTRLA = TWI_MASTER_INTLVL_OFF_gc | TWI_MASTER_ENABLE_bm;
         twi->MASTER.CTRLB = TWI_MASTER_TIMEOUT_DISABLED_gc;
         twi->MASTER.BAUD = (F_CPU / (2 * baud)) - 5;
         twi->MASTER.STATUS = TWI_MASTER_BUSSTATE_IDLE_gc;
+#else // __AVR_XMEGA__
+        uint16_t brv = (F_CPU / (2 * baud)) - 8;
+        if (brv < 256)
+        {
+                TWSR = 0;
+                TWBR = brv;
+        }
+        else if (brv < (256<<2))
+        {
+                TWSR = _BV(TWPS0);
+                TWBR = brv>>2;
+        }
+        else if (brv < (256<<4))
+        {
+                TWSR = _BV(TWPS1);
+                TWBR = brv>>4;
+        }
+        else
+        {
+                TWSR = _BV(TWPS0) | _BV(TWPS1);
+                TWBR = brv>>6;
+        }
+        TWCR = _BV(TWEN);
+#endif // __AVR_XMEGA__
 }
 
 
 void __attribute__ ((noinline)) I2c::end()
 {
+#ifdef __AVR_XMEGA__
         twi->MASTER.CTRLA = 0;
+#else // __AVR_XMEGA__
+        TWCR = 0;
+#endif // __AVR_XMEGA__
         
         flags = 0;
 }
@@ -146,31 +189,49 @@ void __attribute__ ((noinline)) I2c::end()
 
 void I2c::start_write(uint8_t addr)
 {
-        if (flags & I2C_STATE_ACTIVE)
-        {
-                twi->MASTER.CTRLC = TWI_MASTER_CMD_REPSTART_gc;
-        }
-        
-        twi->MASTER.ADDR = (addr << 1) | 0x00;
-        
-        flags |= I2C_STATE_ACTIVE;
-        
-        I2C_WAIT_WRITE_MASTER();
+        start_raw((addr << 1) | 0x00);
 }
 
 
 void I2c::start_read(uint8_t addr)
 {
+        start_raw((addr << 1) | 0x01);
+}
+
+
+void I2c::start_raw(uint8_t addr)
+{
+#ifdef __AVR_XMEGA__
         if (flags & I2C_STATE_ACTIVE)
         {
                 twi->MASTER.CTRLC = TWI_MASTER_CMD_REPSTART_gc;
         }
         
-        twi->MASTER.ADDR = (addr << 1) | 0x01;
+        twi->MASTER.ADDR = addr;
+        
+#else // __AVR_XMEGA__
+        uint8_t status = TWSR & 0xFC;
+        
+        // don't have bus control, force a NAK
+        if (status == 0x40 || status == 0x50)
+        {
+                set_request(1);
+                get();
+        }
+        
+        TWCR = _BV(TWINT) | _BV(TWSTA) | _BV(TWEN);
+        
+        I2C_WAIT_WRITE_MASTER();
+        
+        TWDR = addr;
+        TWCR = _BV(TWINT) | _BV(TWEN);
+#endif // __AVR_XMEGA__
         
         flags |= I2C_STATE_ACTIVE;
         
         I2C_WAIT_READ_MASTER();
+        
+        request = 0;
 }
 
 
@@ -178,9 +239,34 @@ void I2c::stop()
 {
         if (flags & I2C_STATE_ACTIVE)
         {
+#ifdef __AVR_XMEGA__
                 twi->MASTER.CTRLC = TWI_MASTER_CMD_STOP_gc | TWI_MASTER_ACKACT_bm;
+#else // __AVR_XMEGA__
+                uint8_t status = TWSR & 0xFC;
+                
+                // don't have bus control, force a NAK
+                if (status == 0x40 || status == 0x50)
+                {
+                        set_request(1);
+                        get();
+                }
+                
+                TWCR = _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
+#endif // __AVR_XMEGA__
                 flags &= ~I2C_STATE_ACTIVE;
         }
+}
+
+
+void I2c::set_request(size_t _request)
+{
+        request = _request;
+}
+
+
+size_t I2c::available()
+{
+        return request;
 }
 
 
@@ -188,8 +274,13 @@ void I2c::put(char c)
 {
         if (flags & I2C_STATE_ACTIVE)
         {
+#ifdef __AVR_XMEGA__
                 twi->MASTER.DATA = c;
                 twi->MASTER.CTRLC = TWI_MASTER_CMD_RECVTRANS_gc;
+#else // __AVR_XMEGA__
+                TWDR = c;
+                TWCR = _BV(TWINT) | _BV(TWEN);
+#endif // __AVR_XMEGA__
                 I2C_WAIT_WRITE_MASTER();
         }
 }
@@ -200,12 +291,26 @@ char I2c::get()
         char c = 0;
         if (flags & I2C_STATE_ACTIVE)
         {
+#ifdef __AVR_XMEGA__
                 if (!(twi->MASTER.STATUS & TWI_MASTER_RIF_bm))
                 {
                         twi->MASTER.CTRLC = TWI_MASTER_CMD_RECVTRANS_gc;
                         I2C_WAIT_READ_MASTER();
                 }
                 c = twi->MASTER.DATA;
+#else // __AVR_XMEGA__
+                if (request == 1)
+                        TWCR = _BV(TWINT) | _BV(TWEN);
+                else
+                        TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN);
+                
+                if (request > 0)
+                        request--;
+                
+                I2C_WAIT_READ_MASTER();
+                
+                c = TWDR;
+#endif // __AVR_XMEGA__
         }
         return c;
 }

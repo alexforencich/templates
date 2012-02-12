@@ -1,5 +1,5 @@
 /************************************************************************/
-/* XMEGA I2C Driver                                                     */
+/* I2C Driver                                                           */
 /*                                                                      */
 /* i2c.h                                                                */
 /*                                                                      */
@@ -40,15 +40,15 @@
 #include "iostream.h"
 
 // Defines
-#define TWIC_IND 1
-#define TWIE_IND 2
-#define TWID_IND 3
-#define TWIF_IND 4
+#define TWIC_IND 0
+#define TWIE_IND 1
+#define TWID_IND 2
+#define TWIF_IND 3
 
 #if defined(TWIF)
-#define MAX_TWI_IND 4
+#define MAX_TWI_IND 3
 #else
-#define MAX_TWI_IND 2
+#define MAX_TWI_IND 1
 #endif
 
 #define I2C_MODE_MASTER         0x00
@@ -56,8 +56,14 @@
 #define I2C_STATE_IDLE          0x00
 #define I2C_STATE_ACTIVE        0x01
 
+
+#ifdef __AVR_XMEGA__
 #define I2C_WAIT_WRITE_MASTER() while (!(twi->MASTER.STATUS & TWI_MASTER_WIF_bm)) { }
 #define I2C_WAIT_READ_MASTER() while (!(twi->MASTER.STATUS & TWI_MASTER_RIF_bm)) { }
+#else // __AVR_XMEGA__
+#define I2C_WAIT_WRITE_MASTER() while (!(TWCR & _BV(TWINT))) { }
+#define I2C_WAIT_READ_MASTER() I2C_WAIT_WRITE_MASTER()
+#endif // __AVR_XMEGA__
 
 
 // I2c class
@@ -65,26 +71,37 @@ class I2c : public IOStream
 {
 private:
         // Per object data
+#ifdef __AVR_XMEGA__
         TWI_t *twi;
         int twi_ind;
+#endif // __AVR_XMEGA__
+        size_t request;
         
         char flags;
         
         // Static data
-        static I2c *i2c_list[MAX_TWI_IND];
+#ifdef __AVR_XMEGA__
+        static I2c *i2c_list[MAX_TWI_IND-1];
+#endif // __AVR_XMEGA__
         
         // Private methods
         
         // Private static methods
+#ifdef __AVR_XMEGA__
         static char which_twi(TWI_t *_twi);
         static TWI_t *get_twi(char _twi);
         static PORT_t *get_port(char _twi);
+#endif // __AVR_XMEGA__
         
 public:
         // Public variables
         
         // Public methods
+#ifdef __AVR_XMEGA__
         I2c(TWI_t *_twi);
+#else // __AVR_XMEGA__
+        I2c();
+#endif // __AVR_XMEGA__
         ~I2c();
         
         void begin(uint32_t baud);
@@ -92,7 +109,11 @@ public:
         
         void start_write(uint8_t addr);
         void start_read(uint8_t addr);
+        void start_raw(uint8_t addr);
         void stop();
+        
+        void set_request(size_t count);
+        size_t available();
         
         void put(char c);
         
@@ -104,8 +125,8 @@ public:
         static int put(char c, FILE *stream);
         static int get(FILE *stream);
         
-        //static inline void handle_interrupts(char _usart);
-        //static void handle_interrupts(Usart *_usart);
+        //static inline void handle_interrupts(char _i2c);
+        //static void handle_interrupts(Usart *_i2c);
 };
 
 // Prototypes

@@ -1,5 +1,5 @@
 /************************************************************************/
-/* XMEGA USART Driver                                                   */
+/* USART Driver                                                         */
 /*                                                                      */
 /* usart.cpp                                                            */
 /*                                                                      */
@@ -33,8 +33,9 @@
 
 
 // Statics
-Usart *Usart::usart_list[MAX_USART_IND];
+Usart *Usart::usart_list[MAX_USART_IND+1];
 
+#ifdef __AVR_XMEGA__
 
 char __attribute__ ((noinline)) Usart::which_usart(USART_t *_usart)
 {
@@ -70,7 +71,7 @@ char __attribute__ ((noinline)) Usart::which_usart(USART_t *_usart)
         if ((uintptr_t)_usart == (uintptr_t)&USARTF1)
                 return USARTF1_IND;
 #endif
-        return 0;
+        return USART_INVALID_IND;
 }
 
 
@@ -199,9 +200,15 @@ char __attribute__ ((noinline)) Usart::get_txpin(char _usart)
         }
 }
 
+#endif // __AVR_XMEGA__
 
+#ifdef __AVR_XMEGA__
 Usart::Usart(USART_t *_usart) :
         usart(_usart),
+#else // __AVR_XMEGA__
+Usart::Usart(char _usart) :
+        usart_ind(_usart),
+#endif // __AVR_XMEGA__
         txbuf(0),
         txbuf_size(0),
         txbuf_head(0),
@@ -210,23 +217,47 @@ Usart::Usart(USART_t *_usart) :
         rxbuf_size(0),
         rxbuf_head(0),
         rxbuf_tail(0),
+#ifdef __AVR_XMEGA__
         rtsport(0),
         ctsport(0),
         rtspin_bm(0),
         ctspin_bm(0),
+#endif // __AVR_XMEGA__
         nonblocking(0),
         flags(USART_TX_QUEUE_FULL | USART_RX_QUEUE_FULL)
 {
+#ifdef __AVR_XMEGA__
         usart_ind = which_usart(_usart);
-        usart_list[usart_ind-1] = this;
+#endif // __AVR_XMEGA__
+        usart_list[(int)usart_ind] = this;
         
+#ifndef __AVR_XMEGA__
+        if (_usart == 0)
+        {
+                udr = &UDR0;
+                ucsra = &UCSR0A;
+                ucsrb = &UCSR0B;
+                ucsrc = &UCSR0C;
+                ubrr = &UBRR0;
+        }
+        #ifdef UDR1
+        else if (_usart == 1)
+        {
+                udr = &UDR1;
+                ucsra = &UCSR1A;
+                ucsrb = &UCSR1B;
+                ucsrc = &UCSR1C;
+                ubrr = &UBRR1;
+        }
+        #endif // UDR1
+#endif // __AVR_XMEGA__
 }
 
 
 Usart::~Usart()
 {
         end();
-        usart_list[usart_ind-1] = 0;
+        usart_list[(int)usart_ind] = 0;
 }
 
 
@@ -252,12 +283,17 @@ void Usart::set_rx_buffer(char *_rxbuf, size_t _rxbuf_size)
         
         if (flags & USART_RUNNING)
         {
+#ifdef __AVR_XMEGA__
                 usart->CTRLA &= ~USART_RXCINTLVL_gm;
                 usart->CTRLA |= USART_RXCINTLVL_MED_gc;
+#else // __AVR_XMEGA__
+                *ucsrb |= _BV(RXCIE0);
+#endif // __AVR_XMEGA__
         }
 }
 
 
+#ifdef __AVR_XMEGA__
 void Usart::set_rts_pin(PORT_t *_rtsport, int _rtspin)
 {
         rtsport = _rtsport;
@@ -273,6 +309,7 @@ void Usart::set_cts_pin(PORT_t *_ctsport, int _ctspin)
         ctspin_bm = 1 << _ctspin;
         ctsport->DIRCLR = ctspin_bm;
 }
+#endif // __AVR_XMEGA__
 
 
 void Usart::set_nonblocking(uint8_t nb)
@@ -281,6 +318,7 @@ void Usart::set_nonblocking(uint8_t nb)
 }
 
 
+#ifdef __AVR_XMEGA__
 void Usart::update_rts()
 {
         if (rtsport == 0)
@@ -321,10 +359,12 @@ void Usart::check_cts()
                         usart->CTRLA |= USART_DREINTLVL_MED_gc;
         }
 }
+#endif // __AVR_XMEGA__
 
 
-void __attribute__ ((noinline)) Usart::begin(long baud)
+void __attribute__ ((noinline)) Usart::begin(long baud, char _clk2x)
 {
+#ifdef __AVR_XMEGA__
         unsigned char pin;
         unsigned char pinmask;
         PORT_t *port;
@@ -386,17 +426,17 @@ void __attribute__ ((noinline)) Usart::begin(long baud)
                 bscale = -6;
                 clk2x = 0;
         }
-        else if (F_CPU == 32000000L)
-        {
-                bsel = ((F_CPU) / ((uint32_t)baud * 16) - 1);
-                bscale = 0;
-                clk2x = 0;
-        }
-        else
+        else if (_clk2x)
         {
                 bsel = ((F_CPU) / ((uint32_t)baud * 8) - 1);
                 bscale = 0;
                 clk2x = 1;
+        }
+        else
+        {
+                bsel = ((F_CPU) / ((uint32_t)baud * 16) - 1);
+                bscale = 0;
+                clk2x = 0;
         }
         
         usart->BAUDCTRLA = (bsel & USART_BSEL_gm);
@@ -423,13 +463,42 @@ void __attribute__ ((noinline)) Usart::begin(long baud)
         flags |= USART_RUNNING;
         
         update_rts();
+#else // __AVR_XMEGA__
+        if (_clk2x)
+        {
+                *ubrr = ((uint32_t)((F_CPU) + ((uint32_t)(baud) * 4UL)) / ((uint32_t)(baud) * 8UL) - 1);
+                *ucsra = _BV(U2X0);
+        }
+        else
+        {
+                *ubrr = ((uint32_t)((F_CPU) + ((uint32_t)(baud) * 8UL)) / ((uint32_t)(baud) * 16UL) - 1);
+                *ucsra = 0;
+        }
+        
+        if (rxbuf_size > 0)
+        {
+                *ucsrb = _BV(RXEN0) | _BV(TXEN0) | _BV(RXCIE0);
+        }
+        else
+        {
+                *ucsrb = _BV(RXEN0) | _BV(TXEN0);
+        }
+        
+        *ucsrc = _BV(UCSZ01) | _BV(UCSZ00);
+        
+        flags |= USART_RUNNING;
+#endif // __AVR_XMEGA__
 }
 
 
 void __attribute__ ((noinline)) Usart::end()
 {
+#ifdef __AVR_XMEGA__
         usart->CTRLA = 0;
         usart->CTRLB = 0;
+#else // __AVR_XMEGA__
+        *ucsrb = 0;
+#endif // __AVR_XMEGA__
         flags &= ~USART_RUNNING;
 }
 
@@ -437,9 +506,17 @@ void __attribute__ ((noinline)) Usart::end()
 void Usart::recv()
 {
         char tmp;
+#ifdef __AVR_XMEGA__
         if (usart->STATUS & USART_RXCIF_bm)
+#else // __AVR_XMEGA__
+        if (*ucsra & _BV(RXC0))
+#endif // __AVR_XMEGA__
         {
+#ifdef __AVR_XMEGA__
                 tmp = usart->DATA;
+#else // __AVR_XMEGA__
+                tmp = *udr;
+#endif // __AVR_XMEGA__
                 if (!(flags & USART_RX_QUEUE_FULL))
                 {
                         rxbuf[rxbuf_head++] = tmp;
@@ -449,7 +526,9 @@ void Usart::recv()
                         if (rxbuf_head == rxbuf_tail)
                                 flags |= USART_RX_QUEUE_FULL;
                 }
+#ifdef __AVR_XMEGA__
                 update_rts();
+#endif // __AVR_XMEGA__
         }
 }
 
@@ -458,7 +537,11 @@ void Usart::xmit()
 {
         if (!(flags & USART_TX_QUEUE_EMPTY))
         {
+#ifdef __AVR_XMEGA__
                 usart->DATA = txbuf[txbuf_tail++];
+#else // __AVR_XMEGA__
+                *udr = txbuf[txbuf_tail++];
+#endif // __AVR_XMEGA__
                 flags &= ~USART_TX_QUEUE_FULL;
                 if (txbuf_tail >= txbuf_size)
                         txbuf_tail = 0;
@@ -467,7 +550,11 @@ void Usart::xmit()
         }
         if (flags & USART_TX_QUEUE_EMPTY)
         {
+#ifdef __AVR_XMEGA__
                 usart->CTRLA &= ~USART_DREINTLVL_gm;
+#else // __AVR_XMEGA__
+                *ucsrb &= ~_BV(UDRIE0);
+#endif // __AVR_XMEGA__
         }
 }
 
@@ -476,14 +563,19 @@ void Usart::put(char c)
 {
         uint8_t saved_status = 0;
         
-        if (!(flags & USART_RUNNING) || (!(SREG & CPU_I_bm) && (flags & USART_TX_QUEUE_FULL)))
+        if (!(flags & USART_RUNNING) || (!(SREG & SREG_I) && (flags & USART_TX_QUEUE_FULL)))
                 return;
         
-        // blocking read if no buffer
+        // blocking write if no buffer
         if (txbuf_size == 0)
         {
+#ifdef __AVR_XMEGA__
                 while (!(usart->STATUS & USART_DREIF_bm)) { };
                 usart->DATA = c;
+#else // __AVR_XMEGA__
+                while (!(*ucsra & _BV(UDRE0))) { };
+                *udr = c;
+#endif // __AVR_XMEGA__
                 return;
         }
         
@@ -503,7 +595,11 @@ void Usart::put(char c)
         if (txbuf_head == txbuf_tail)
                 flags |= USART_TX_QUEUE_FULL;
         
+#ifdef __AVR_XMEGA__
         usart->CTRLA |= USART_DREINTLVL_MED_gc;
+#else // __AVR_XMEGA__
+        *ucsrb |= _BV(UDRIE0);
+#endif // __AVR_XMEGA__
         
         SREG = saved_status;
 }
@@ -523,14 +619,19 @@ char Usart::get()
         uint8_t saved_status = 0;
         char c;
         
-        if (!(flags & USART_RUNNING) || (!(SREG & CPU_I_bm) && (flags & USART_RX_QUEUE_EMPTY)))
+        if (!(flags & USART_RUNNING) || (!(SREG & SREG_I) && (flags & USART_RX_QUEUE_EMPTY)))
                 return 0;
         
         // blocking read if no buffer
         if (rxbuf_size == 0)
         {
+#ifdef __AVR_XMEGA__
                 while (!(usart->STATUS & USART_RXCIF_bm)) { };
                 return usart->DATA;
+#else // __AVR_XMEGA__
+                while (!(*ucsra & _BV(RXC0))) { };
+                return *udr;
+#endif // __AVR_XMEGA__
         }
         
         // return if nonblocking
@@ -549,7 +650,9 @@ char Usart::get()
         if (rxbuf_head == rxbuf_tail)
                 flags |= USART_RX_QUEUE_EMPTY;
         
+#ifdef __AVR_XMEGA__
         update_rts();
+#endif // __AVR_XMEGA__
         
         SREG = saved_status;
         
@@ -588,7 +691,7 @@ int Usart::ungetc(int c)
 {
         uint8_t saved_status = 0;
         
-        if (c == EOF || flags & USART_RX_QUEUE_FULL || (!(SREG & CPU_I_bm) && (flags & USART_RX_QUEUE_FULL)))
+        if (c == EOF || flags & USART_RX_QUEUE_FULL || (!(SREG & SREG_I) && (flags & USART_RX_QUEUE_FULL)))
                 return EOF;
         
         // return EOF if no buffer
@@ -648,14 +751,21 @@ int Usart::get(FILE *stream)
 // static
 inline void Usart::handle_interrupts(char _usart)
 {
-        Usart *u = usart_list[_usart-1];
+        Usart *u = usart_list[(int)_usart];
         if (u)
         {
+#ifdef __AVR_XMEGA__
                 USART_t *dev = get_usart(_usart);
                 if (dev->STATUS & USART_DREIF_bm)
                         u->xmit();
                 if (dev->STATUS & USART_RXCIF_bm)
                         u->recv();
+#else // __AVR_XMEGA__
+                if (*(u->ucsra) & _BV(UDRE0))
+                        u->xmit();
+                if (*(u->ucsra) & _BV(RXC0))
+                        u->recv();
+#endif // __AVR_XMEGA__
         }
 }
 
@@ -665,17 +775,26 @@ void Usart::handle_interrupts(Usart *_usart)
 {
         if (_usart)
         {
+#ifdef __AVR_XMEGA__
                 USART_t *dev = _usart->usart;
                 if (dev->STATUS & USART_DREIF_bm)
                         _usart->xmit();
                 if (dev->STATUS & USART_RXCIF_bm)
                         _usart->recv();
+#else // __AVR_XMEGA__
+                if (*(_usart->ucsra) & _BV(UDRE0))
+                        _usart->xmit();
+                if (*(_usart->ucsra) & _BV(RXC0))
+                        _usart->recv();
+#endif // __AVR_XMEGA__
         }
 }
 
 
 #ifdef USART_CREATE_ALL_ISR
 // ISR
+#ifdef __AVR_XMEGA__
+
 #ifdef USARTC0
 ISR(USARTC0_DRE_vect)
 {
@@ -732,6 +851,10 @@ ISR(USARTF1_DRE_vect)
 }
 ISR(USARTF1_RXC_vect, ISR_ALIASOF(USARTF1_DRE_vect));
 #endif
+
+#else // __AVR_XMEGA__
+
+#endif // __AVR_XMEGA__
 
 #endif // USART_CREATE_ALL_ISR
 

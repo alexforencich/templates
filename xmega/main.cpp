@@ -73,7 +73,11 @@ uint8_t SP_ReadUserSigRow( uint8_t index )
 }
 
 // Timer tick ISR (1 kHz)
+#ifdef __AVR_XMEGA__
 ISR(TCC0_OVF_vect)
+#else // __AVR_XMEGA__
+ISR(TIMER1_CAPT_vect)
+#endif // __AVR_XMEGA__
 {
         // Timers
         jiffies++;
@@ -81,6 +85,38 @@ ISR(TCC0_OVF_vect)
         if (jiffies % 50 == 0)
                 LED_PORT.OUTTGL = 0x03;
         
+}
+
+int64_t get_jiffies_us()
+{
+#ifdef __AVR_XMEGA__
+        uint16_t t = TCC0.CNT;
+#else // __AVR_XMEGA__
+        uint16_t t = TCNT1;
+#endif // __AVR_XMEGA__
+        uint32_t tj = jiffies;
+#ifdef __AVR_XMEGA__
+        if (TCC0.INTFLAGS & TC0_OVFIF_bm) t += TCC0.PER;
+#else // __AVR_XMEGA__
+        if (TIFR1 & _BV(ICF1)) t += ICR1;
+#endif // __AVR_XMEGA__
+        return ((int64_t)tj * 1000) + (t >> 4);
+}
+
+int64_t get_jiffies_ns()
+{
+#ifdef __AVR_XMEGA__
+        uint16_t t = TCC0.CNT;
+#else // __AVR_XMEGA__
+        uint16_t t = TCNT1;
+#endif // __AVR_XMEGA__
+        uint32_t tj = jiffies;
+#ifdef __AVR_XMEGA__
+        if (TCC0.INTFLAGS & TC0_OVFIF_bm) t += TCC0.PER;
+#else // __AVR_XMEGA__
+        if (TIFR1 & _BV(ICF1)) t += ICR1;
+#endif // __AVR_XMEGA__
+        return ((int64_t)tj * 1000000) + (((uint32_t)t * 125) >> 1);
 }
 
 // Init everything
@@ -142,7 +178,10 @@ void init(void)
         //ADCA.CTRLB |= ADC_FREERUN_bm;
         
         // TCC
-        TCC0.CTRLA = TC_CLKSEL_DIV256_gc;
+#ifdef __AVR_XMEGA__
+        // tick rate 32 MHz = timer resolution 31.25 ns
+        // rollover rate 1 kHz = tick period 1 kHz
+        TCC0.CTRLA = TC_CLKSEL_DIV1_gc;
         TCC0.CTRLB = 0;
         TCC0.CTRLC = 0;
         TCC0.CTRLD = 0;
@@ -150,7 +189,17 @@ void init(void)
         TCC0.INTCTRLA = TC_OVFINTLVL_LO_gc;
         TCC0.INTCTRLB = 0;
         TCC0.CNT = 0;
-        TCC0.PER = 125;
+        TCC0.PER = 32000;
+#else // __AVR_XMEGA__
+        // tick rate 16 MHz = timer resolution 62.5 ns
+        // rollover rate 1 kHz = tick period 1 kHz
+        TCCR1A = 0;
+        TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS10);
+        TCCR1C = 0;
+        TCNT1 = 0;
+        ICR1 = 16000;
+        TIMSK1 = _BV(ICIE1);
+#endif // __AVR_XMEGA__
         
         // ADC trigger on TCC0 overflow
         //EVSYS.CH0MUX = EVSYS_CHMUX_TCC0_OVF_gc;
@@ -187,8 +236,8 @@ int main(void)
         while (1)
         {
                 // main loop
-                LED_PORT.OUTTGL = 0x03;
-                _delay_ms(50);
+                
+                
         }
         
 }

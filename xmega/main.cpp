@@ -50,7 +50,7 @@ I2c i2c(&I2C_DEV);
 
 // Timer
 
-unsigned long jiffies = 0;
+volatile unsigned long jiffies = 0;
 
 // Production signature row access
 uint8_t SP_ReadCalibrationByte( uint8_t index )

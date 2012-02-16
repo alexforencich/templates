@@ -46,7 +46,7 @@ I2c i2c;
 
 // Timer
 
-unsigned long jiffies = 0;
+volatile unsigned long jiffies = 0;
 
 // Timer tick ISR (1 kHz)
 #ifdef __AVR_XMEGA__

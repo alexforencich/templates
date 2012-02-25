@@ -60,7 +60,7 @@ OBJ = obj
 DEP = dep
 
 # Libraries
-LIBS = -lm -lc -lgcc
+LIBS = -nostartfiles -lm -lc -lgcc
 
 #-------------------------------------------------------------------------------
 #		Tools

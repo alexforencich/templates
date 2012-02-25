@@ -102,6 +102,9 @@ void init()
         PIN_LED_PIO->PIO_OER = PIN_LED_OESET;
         PIN_LED_PIO->PIO_ODR = PIN_LED_OECLR;
         PIN_LED_PIO->PIO_CODR = PIN_LED_MASK;
+
+        // set up USART
+        usart_init(115200);
         
 }
 
@@ -112,6 +115,8 @@ int main()
         init();
         
         PIN_LED_PIO->PIO_SODR = PIN_LED_1_MASK;
+        
+        usart_puts("Startup\n");
         
         while (1)
         {

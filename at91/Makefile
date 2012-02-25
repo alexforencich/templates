@@ -114,7 +114,7 @@ C_OBJECTS = main.o
 C_OBJECTS += div0.o #led.o
 C_OBJECTS += dbgu.o pio.o aic.o pio_it.o pit.o
 C_OBJECTS += board_memories.o board_lowlevel.o
-C_OBJECTS += timer.o hook.o
+C_OBJECTS += timer.o hook.o usart.o
 #C_OBJECTS += ...
 
 # Objects built from Assembly source files

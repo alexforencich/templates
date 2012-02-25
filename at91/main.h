@@ -42,6 +42,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "timer.h"
+#include "usart.h"
+
 /*
  * Definitions
  */

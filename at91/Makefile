@@ -161,7 +161,7 @@ $(BIN) $(OBJ):
 $(MEMORIES): %: $(OUTPUT)-%.elf $(OUTPUT)-%.bin $(OUTPUT)-%.lst
 
 %.elf: $(ASM_OBJECTS) $(C_OBJECTS) | $(BIN)
-	$(CC) $(LDFLAGS) -T"$(CHIPS)/$(CHIP)/$(patsubst $(OUTPUT)-%.elf,%,$@).lds" -o $@ $^
+	$(CC) $(LDFLAGS) -T"$(CHIPS)/$(CHIP)/$(patsubst $(OUTPUT)-%.elf,%,$@).lds" -Wl,-Map=$(basename $@).map,--cref -o $@ $^
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@

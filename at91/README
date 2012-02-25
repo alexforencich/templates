@@ -1,0 +1,81 @@
+ATMEL AT91 Series ARM template (arm-elf-gcc)
+
+This is a basic template project for the Atmel AT91 ARM series
+microcontrollers.  The template includes libraries for several common
+peripherals.  It uses the arm-elf-gcc toolchain and the openocd programmer.  
+
+For more information and updates:
+http://alexforencich.com/wiki/en/templates/at91
+
+GitHub repository:
+https://github.com/alexforencich/templates
+
+Included Libraries:
+  * Timer
+
+
+
+Compiling (Linux)
+
+Requirements
+
+* gcc cross compiler for arm-elf
+* newlib for arm-elf
+* openocd
+* git (optional for building toolchain)
+
+Procedure
+
+1. Build and install toolchain
+
+ * Clone https://github.com/esden/summon-arm-toolchain
+   Or download https://github.com/esden/summon-arm-toolchain/tarball/master
+   and extract
+ * Edit summon-arm-toolchain
+   TARGET=arm-elf
+   USE_LINARO=0
+   Possibly edit PREFIX
+ * Run summon-arm-toolchain
+ * Get lunch/dinner/snack/coffee
+ * Add $(home)/sac/bin (or PREFIX from before) to your PATH in .bashrc,
+   .bash_profile, or equvalent
+ * Log out and log back in
+
+2. Edit makefile for device and programmer settings
+
+3. Build
+
+ $ make
+
+4. Program
+
+ $ make program
+
+
+
+Compiling (Windows)
+
+Requirements
+
+* yagarto
+* openocd
+
+Procedure
+
+1. Install software
+
+ * Install Yagarto from http://www.yagarto.de/#download
+ * Install openocd from http://www.freddiechopin.info/index.php/en/download/category/4-openocd
+
+2. Edit makefile for device and programmer settings
+   Also may need to change CROSS to arm-none-eabi-
+
+3. Build
+
+ > make
+
+4. Program
+
+ > make program
+
+

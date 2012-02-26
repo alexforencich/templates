@@ -62,6 +62,19 @@ DEP = dep
 # Libraries
 LIBS = -nostartfiles -lm -lc -lgcc
 
+# Objects built from C source files
+SRC = main.c
+SRC += div0.c
+#src += led.c
+SRC += dbgu.c pio.c aic.c pio_it.c pit.c
+SRC += board_memories.c board_lowlevel.c
+SRC += timer.c hook.c usart.c
+#SRC += ...
+
+# Objects built from Assembly source files
+ASRC = board_cstartup.S _udivsi3.S
+#ASRC += ...
+
 #-------------------------------------------------------------------------------
 #		Tools
 #-------------------------------------------------------------------------------
@@ -85,13 +98,27 @@ INCLUDES += -I$(AT91LIB)/chips
 INCLUDES += -I$(AT91LIB)/peripherals
 INCLUDES += -I$(AT91LIB)
 
+# Defines
+DEFS =
+
 # Compiler flags to generate dependency files.
 GENDEPFLAGS = -MD -MP -MF $(DEP)/$(@F).d
 
-CFLAGS = -mlong-calls -ffunction-sections -Wall #-Werror
-CFLAGS += -g $(OPTIMIZATION) $(INCLUDES) -D$(CHIP)  #-DNOTRACE
-CFLAGS += $(GENDEPFLAGS)
-ASFLAGS = -g $(OPTIMIZATION) $(INCLUDES) -D$(CHIP) -D__ASSEMBLY__
+# Common Flags
+COMMON_FLAGS = -mlong-calls -ffunction-sections
+COMMON_FLAGS += -g $(OPTIMIZATION) $(INCLUDES) -D$(CHIP) $(DEFS)
+COMMON_FLAGS += -Wall
+COMMON_FLAGS += -Wa,-adhlns=$(basename $@).lst
+COMMON_FLAGS += $(GENDEPFLAGS)
+
+# C Specific flags
+CFLAGS = $(COMMON_FLAGS)
+
+# Assember flags
+ASFLAGS = -g $(OPTIMIZATION) $(INCLUDES) -D$(CHIP) -D__ASSEMBLY__ $(DEFS)
+ASFLAGS += -Wa,-adhlns=$(basename $@).lst
+
+# Linker flags
 LDFLAGS = -g $(OPTIMIZATION) -Wl,--gc-sections $(LIBS)
 
 #-------------------------------------------------------------------------------
@@ -109,21 +136,10 @@ VPATH += $(PERIPH)/dbgu $(PERIPH)/aic $(PERIPH)/pio $(PERIPH)/pit
 VPATH += $(BOARDDIR)
 VPATH += $(CHIPS)/$(CHIP)
 
-# Objects built from C source files
-C_OBJECTS = main.o
-C_OBJECTS += div0.o #led.o
-C_OBJECTS += dbgu.o pio.o aic.o pio_it.o pit.o
-C_OBJECTS += board_memories.o board_lowlevel.o
-C_OBJECTS += timer.o hook.o usart.o
-#C_OBJECTS += ...
-
-# Objects built from Assembly source files
-ASM_OBJECTS = board_cstartup.o _udivsi3.o
-#ASM_OBJECTS += ...
-
 # Append output directories to files
-C_OBJECTS := $(addprefix $(OBJ)/, $(C_OBJECTS))
-ASM_OBJECTS := $(addprefix $(OBJ)/, $(ASM_OBJECTS))
+CSRC := $(filter %.c, $(SRC))
+C_OBJECTS := $(addprefix $(OBJ)/, $(addsuffix .o,$(basename $(CSRC))))
+ASM_OBJECTS := $(addprefix $(OBJ)/, $(addsuffix .o,$(basename $(ASRC))))
 OUTPUT := $(addprefix $(BIN)/, $(OUTPUT))
 
 #-------------------------------------------------------------------------------
@@ -158,24 +174,26 @@ program: all
 $(BIN) $(OBJ):
 	mkdir $@
 
-$(MEMORIES): %: $(OUTPUT)-%.elf $(OUTPUT)-%.bin $(OUTPUT)-%.lst
+$(MEMORIES): %: $(OUTPUT)-%.elf $(OUTPUT)-%.bin $(OUTPUT)-%.lss
 
+.SECONDARY : %.elf
+.PRECIOUS : $(ASM_OBJECTS) $(C_OBJECTS)
 %.elf: $(ASM_OBJECTS) $(C_OBJECTS) | $(BIN)
 	$(CC) $(LDFLAGS) -T"$(CHIPS)/$(CHIP)/$(patsubst $(OUTPUT)-%.elf,%,$@).lds" -Wl,-Map=$(basename $@).map,--cref -o $@ $^
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
 
-%.lst: %.elf
+%.lss: %.elf
 	$(OBJDUMP) -S $< > $@
 
 size: $(MEMORIES)
 	$(SIZE) $(ASM_OBJECTS) $(C_OBJECTS) $(OUTPUT)-*.elf
 
-$(C_OBJECTS): $(OBJ)/%.o: %.c Makefile | $(OBJ)
+$(OBJ)/%.o: %.c Makefile | $(OBJ)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(ASM_OBJECTS): $(OBJ)/%.o: %.S Makefile | $(OBJ)
+$(OBJ)/%.o: %.S Makefile | $(OBJ)
 	$(CC) $(ASFLAGS) -c -o $@ $<
 
 clean:

@@ -30,7 +30,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------- 
 
-# 	Makefile for compiling the Getting Started project
+# 	Makefile for ATMEL ARM projects
 
 #-------------------------------------------------------------------------------
 #		User-modifiable options

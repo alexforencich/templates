@@ -198,9 +198,10 @@ $(OBJ)/%.o: %.S Makefile | $(OBJ)
 
 clean:
 	rm -f $(OBJ)/*.o
+	rm -f $(OBJ)/*.lst
 	rm -f $(BIN)/*.bin
 	rm -f $(BIN)/*.elf
-	rm -f $(BIN)/*.lst
+	rm -f $(BIN)/*.lss
 	rm -f $(DEP)/*
 
 # Include the dependency files.

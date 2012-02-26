@@ -1,0 +1,89 @@
+/* ----------------------------------------------------------------------------
+ *         ATMEL Microcontroller Software Support  -  ROUSSET  -
+ * ----------------------------------------------------------------------------
+ * Copyright (c) 2006, Atmel Corporation
+ *
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ * - Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the disclaimer below.
+ * 
+ * - Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the disclaimer below in the documentation and/or
+ * other materials provided with the distribution. 
+ * 
+ * Atmel's name may not be used to endorse or promote products derived from
+ * this software without specific prior written permission. 
+ * 
+ * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
+ * DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ----------------------------------------------------------------------------
+ */
+
+//------------------------------------------------------------------------------
+/// \dir
+/// !Purpose
+/// 
+/// This module provides definitions and functions for using the DBGU.
+///
+/// !Usage
+/// 
+/// -# Enable the DBGU pins (see pio.h).
+/// -# Configure the DBGU using DBGU_Configure.
+/// -# Output traces using DBGU_Printf or simply printf.
+///
+/// \note Unless specified, all the functions defined here operate synchronously;
+/// i.e. they all wait the data is sent/received before returning.
+//------------------------------------------------------------------------------
+
+#ifndef DBGU_H
+#define DBGU_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+//------------------------------------------------------------------------------
+//         Definitions
+//------------------------------------------------------------------------------
+/// Redefinition of printf using DBGU_Printf.
+#define printf(...)             DBGU_Printf(__VA_ARGS__)
+
+//------------------------------------------------------------------------------
+/// \page Modes
+/// This page lists several common operating modes for the DBGU.
+/// !Modes
+/// - DBGU_STANDARD
+ 
+/// Standard operating mode (asynchronous, 8bit, no parity)
+#define DBGU_STANDARD           AT91C_US_PAR_NONE
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+//      Exported functions
+//------------------------------------------------------------------------------
+extern void DBGU_Configure(unsigned int mode,
+                                  unsigned int baudrate,
+                                  unsigned int mck);
+extern void DBGU_Printf(const char *string, ...);
+
+extern unsigned char DBGU_GetChar();
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif //#ifndef DBGU_H
+

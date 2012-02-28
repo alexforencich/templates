@@ -45,9 +45,6 @@
 /*
  * Definitions
  */
-#define USART_TRANSMIT_BUFFER_SIZE      128
-#define USART_RECEIVE_BUFFER_SIZE       128
-
 #define USART_INT_PRIOR                 5
 
 #define USART0_IND 0
@@ -84,20 +81,6 @@
 /*
  * Globals
  */
-
-// buffers
-extern volatile char usart_transmit_buffer[USART_TRANSMIT_BUFFER_SIZE];
-extern volatile unsigned int usart_transmit_buffer_front;
-extern volatile unsigned int usart_transmit_buffer_next_front;
-extern volatile unsigned int usart_transmit_buffer_xfer_size;
-extern volatile unsigned int usart_transmit_buffer_back;
-extern volatile unsigned int usart_transmit_buffer_length;
-
-extern volatile char usart_receive_buffer[USART_RECEIVE_BUFFER_SIZE];
-extern volatile unsigned int usart_receive_buffer_front;
-extern volatile unsigned int usart_receive_buffer_back;
-extern volatile unsigned int usart_receive_buffer_length;
-
 extern volatile unsigned int usart_transmit_total_bytes;
 extern volatile unsigned int usart_receive_total_bytes;
 

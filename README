@@ -10,7 +10,9 @@ https://github.com/alexforencich/templates
 
 Included templates:
 
-* xmega (AVR xmega 8-bit microcontroller, avr-gcc toolchain)
-* simple-gtk (Linux/Windows cross-platform GTK application, gcc/mingw)
+* xmega (C++, AVR xmega 8-bit microcontroller, avr-gcc toolchain)
+* atmega (C++, AVR 8-bit microcontroller, avr-gcc toolchain)
+* at91 (C/C++, AVR AT91 series ARM, arm-elf-gcc toolchain)
+* simple-gtk (C++, Linux/Windows cross-platform GTK application, gcc/mingw)
 
 

@@ -563,7 +563,7 @@ void Usart::put(char c)
 {
         uint8_t saved_status = 0;
         
-        if (!(flags & USART_RUNNING) || (!(SREG & SREG_I) && (flags & USART_TX_QUEUE_FULL)))
+        if (!(flags & USART_RUNNING) || (!(SREG & _BV(SREG_I)) && (flags & USART_TX_QUEUE_FULL)))
                 return;
         
         // blocking write if no buffer
@@ -619,7 +619,7 @@ char Usart::get()
         uint8_t saved_status = 0;
         char c;
         
-        if (!(flags & USART_RUNNING) || (!(SREG & SREG_I) && (flags & USART_RX_QUEUE_EMPTY)))
+        if (!(flags & USART_RUNNING) || (!(SREG & _BV(SREG_I)) && (flags & USART_RX_QUEUE_EMPTY)))
                 return 0;
         
         // blocking read if no buffer
@@ -691,7 +691,7 @@ int Usart::ungetc(int c)
 {
         uint8_t saved_status = 0;
         
-        if (c == EOF || flags & USART_RX_QUEUE_FULL || (!(SREG & SREG_I) && (flags & USART_RX_QUEUE_FULL)))
+        if (c == EOF || flags & USART_RX_QUEUE_FULL || (!(SREG & _BV(SREG_I)) && (flags & USART_RX_QUEUE_FULL)))
                 return EOF;
         
         // return EOF if no buffer

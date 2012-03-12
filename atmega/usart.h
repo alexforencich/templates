@@ -211,6 +211,7 @@ public:
         void begin(long baud, char _clk2x = 0);
         void end();
         
+        size_t free();
         void put(char c);
         
         size_t available();

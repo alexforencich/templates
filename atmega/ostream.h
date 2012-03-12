@@ -39,6 +39,7 @@ class OStream
 {
 public:
         // Public methods
+        virtual size_t free();
         virtual void put(char c);
         virtual void write_string(const char *str);
         virtual size_t write(const void *ptr, size_t num);

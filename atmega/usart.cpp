@@ -559,6 +559,15 @@ void Usart::xmit()
 }
 
 
+size_t Usart::free()
+{
+        int cnt = txbuf_tail - txbuf_head;
+        if (cnt < 0 || flags & USART_TX_QUEUE_EMPTY)
+                cnt += txbuf_size;
+        return cnt;
+}
+
+
 void Usart::put(char c)
 {
         uint8_t saved_status = 0;

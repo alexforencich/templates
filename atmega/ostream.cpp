@@ -32,6 +32,12 @@
 #include "ostream.h"
 
 
+size_t OStream::free()
+{
+        return 0;
+}
+
+
 void OStream::put(char c)
 {
         

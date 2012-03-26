@@ -323,7 +323,7 @@ void Usart::update_rts()
 {
         if (rtsport == 0)
                 return;
-        if (rxbuf_size == 0)
+        if (txbuf_size == 0)
         {
                 // no buffer, so just assert it
                 rtsport->OUTCLR = rtspin_bm;
@@ -362,7 +362,7 @@ void Usart::check_cts()
 #endif // __AVR_XMEGA__
 
 
-void __attribute__ ((noinline)) Usart::begin(long baud, char _clk2x)
+void __attribute__ ((noinline)) Usart::begin(long baud, char _clk2x, char puen)
 {
 #ifdef __AVR_XMEGA__
         unsigned char pin;
@@ -377,6 +377,11 @@ void __attribute__ ((noinline)) Usart::begin(long baud, char _clk2x)
         pinmask = 1 << pin;
         port->DIRSET = pinmask;
         port->DIRCLR = pinmask >> 1;
+        
+        if (puen)
+        {
+                *(&(port->PIN0CTRL)+(pin-1)) = PORT_OPC_PULLUP_gc;
+        }
         
         if ((F_CPU == 2000000L) && (baud == 19200))
         {
@@ -572,7 +577,7 @@ void Usart::put(char c)
 {
         uint8_t saved_status = 0;
         
-        if (!(flags & USART_RUNNING) || (!(SREG & _BV(SREG_I)) && (flags & USART_TX_QUEUE_FULL)))
+        if (!(flags & USART_RUNNING) || (!(SREG & SREG_I) && (flags & USART_TX_QUEUE_FULL)))
                 return;
         
         // blocking write if no buffer
@@ -628,7 +633,7 @@ char Usart::get()
         uint8_t saved_status = 0;
         char c;
         
-        if (!(flags & USART_RUNNING) || (!(SREG & _BV(SREG_I)) && (flags & USART_RX_QUEUE_EMPTY)))
+        if (!(flags & USART_RUNNING) || (!(SREG & SREG_I) && (flags & USART_RX_QUEUE_EMPTY)))
                 return 0;
         
         // blocking read if no buffer
@@ -700,7 +705,7 @@ int Usart::ungetc(int c)
 {
         uint8_t saved_status = 0;
         
-        if (c == EOF || flags & USART_RX_QUEUE_FULL || (!(SREG & _BV(SREG_I)) && (flags & USART_RX_QUEUE_FULL)))
+        if (c == EOF || flags & USART_RX_QUEUE_FULL || (!(SREG & SREG_I) && (flags & USART_RX_QUEUE_FULL)))
                 return EOF;
         
         // return EOF if no buffer

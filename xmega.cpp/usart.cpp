@@ -323,7 +323,7 @@ void Usart::update_rts()
 {
         if (rtsport == 0)
                 return;
-        if (rxbuf_size == 0)
+        if (txbuf_size == 0)
         {
                 // no buffer, so just assert it
                 rtsport->OUTCLR = rtspin_bm;

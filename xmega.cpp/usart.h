@@ -208,7 +208,7 @@ public:
         
         void check_cts();
         
-        void begin(long baud, char _clk2x = 0);
+        void begin(long baud, char _clk2x = 0, char puen = 1);
         void end();
         
         size_t free();

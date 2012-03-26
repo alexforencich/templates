@@ -362,7 +362,7 @@ void Usart::check_cts()
 #endif // __AVR_XMEGA__
 
 
-void __attribute__ ((noinline)) Usart::begin(long baud, char _clk2x)
+void __attribute__ ((noinline)) Usart::begin(long baud, char _clk2x, char puen)
 {
 #ifdef __AVR_XMEGA__
         unsigned char pin;
@@ -377,6 +377,11 @@ void __attribute__ ((noinline)) Usart::begin(long baud, char _clk2x)
         pinmask = 1 << pin;
         port->DIRSET = pinmask;
         port->DIRCLR = pinmask >> 1;
+        
+        if (puen)
+        {
+                *(&(port->PIN0CTRL)+(pin-1)) = PORT_OPC_PULLUP_gc;
+        }
         
         if ((F_CPU == 2000000L) && (baud == 19200))
         {

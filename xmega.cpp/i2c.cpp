@@ -202,7 +202,7 @@ void I2c::start_read(uint8_t addr)
 void I2c::start_raw(uint8_t addr)
 {
 #ifdef __AVR_XMEGA__
-        if (flags & I2C_STATE_ACTIVE)
+        if (flags & I2C_FLAG_ACTIVE)
         {
                 twi->MASTER.CTRLC = TWI_MASTER_CMD_REPSTART_gc;
         }
@@ -227,7 +227,7 @@ void I2c::start_raw(uint8_t addr)
         TWCR = _BV(TWINT) | _BV(TWEN);
 #endif // __AVR_XMEGA__
         
-        flags |= I2C_STATE_ACTIVE;
+        flags |= I2C_FLAG_ACTIVE;
         
         I2C_WAIT_READ_MASTER();
         
@@ -237,7 +237,7 @@ void I2c::start_raw(uint8_t addr)
 
 void I2c::stop()
 {
-        if (flags & I2C_STATE_ACTIVE)
+        if (flags & I2C_FLAG_ACTIVE)
         {
 #ifdef __AVR_XMEGA__
                 twi->MASTER.CTRLC = TWI_MASTER_CMD_STOP_gc | TWI_MASTER_ACKACT_bm;
@@ -253,7 +253,7 @@ void I2c::stop()
                 
                 TWCR = _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);
 #endif // __AVR_XMEGA__
-                flags &= ~I2C_STATE_ACTIVE;
+                flags &= ~I2C_FLAG_ACTIVE;
         }
 }
 
@@ -272,7 +272,7 @@ size_t I2c::available()
 
 void I2c::put(char c)
 {
-        if (flags & I2C_STATE_ACTIVE)
+        if (flags & I2C_FLAG_ACTIVE)
         {
 #ifdef __AVR_XMEGA__
                 twi->MASTER.DATA = c;
@@ -289,7 +289,7 @@ void I2c::put(char c)
 char I2c::get()
 {
         char c = 0;
-        if (flags & I2C_STATE_ACTIVE)
+        if (flags & I2C_FLAG_ACTIVE)
         {
 #ifdef __AVR_XMEGA__
                 if (!(twi->MASTER.STATUS & TWI_MASTER_RIF_bm))

@@ -53,8 +53,8 @@
 
 #define I2C_MODE_MASTER         0x00
 #define I2C_MODE_SLAVE          0x80
-#define I2C_STATE_IDLE          0x00
-#define I2C_STATE_ACTIVE        0x01
+
+#define I2C_FLAG_ACTIVE         0x01
 
 
 #ifdef __AVR_XMEGA__

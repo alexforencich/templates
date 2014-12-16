@@ -235,7 +235,7 @@ CFLAGS += $(CSTANDARD)
 #CFLAGS += ...
 
 # C++ Specific flags
-CXXFLAGS = $(COMMON_FLAGS)
+CXXFLAGS = $(COMMON_FLAGS) -fno-use-cxa-atexit
 #CXXFLAGS += ...
 
 

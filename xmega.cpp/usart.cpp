@@ -577,7 +577,7 @@ void Usart::put(char c)
 {
         uint8_t saved_status = 0;
         
-        if (!(flags & USART_RUNNING) || (!(SREG & SREG_I) && (flags & USART_TX_QUEUE_FULL)))
+        if (!(flags & USART_RUNNING) || (!(SREG & _BV(SREG_I)) && (flags & USART_TX_QUEUE_FULL)))
                 return;
         
         // blocking write if no buffer

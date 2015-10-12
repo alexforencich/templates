@@ -127,6 +127,8 @@ void init(void)
         while (!(OSC.STATUS & OSC_RC32MRDY_bm)) { }; // wait for it to start
         CCP = CCP_IOREG_gc;
         CLK.CTRL = CLK_SCLKSEL_RC32M_gc; // swtich osc
+        OSC.CTRL |= OSC_RC32KEN_bm; // turn on 32 kHz reference oscillator
+        while (!(OSC.STATUS & OSC_RC32KRDY_bm)) { }; // wait for it to start
         DFLLRC32M.CTRL = DFLL_ENABLE_bm; // turn on DFLL
         
         // disable JTAG

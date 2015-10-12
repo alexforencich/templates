@@ -223,6 +223,9 @@ Usart::Usart(char _usart) :
         rtspin_bm(0),
         ctspin_bm(0),
 #endif // __AVR_XMEGA__
+#ifdef PORT_USART0_bm
+        remap(0),
+#endif
         nonblocking(0),
         flags(USART_TX_QUEUE_FULL | USART_RX_QUEUE_FULL)
 {
@@ -312,6 +315,14 @@ void Usart::set_cts_pin(PORT_t *_ctsport, int _ctspin)
 #endif // __AVR_XMEGA__
 
 
+#ifdef PORT_USART0_bm
+void Usart::set_remap(uint8_t rm)
+{
+        remap = rm;
+}
+#endif
+
+
 void Usart::set_nonblocking(uint8_t nb)
 {
         nonblocking = nb;
@@ -374,9 +385,25 @@ void __attribute__ ((noinline)) Usart::begin(long baud, char _clk2x, char puen)
         
         pin = get_txpin(usart_ind);
         port = get_port(usart_ind);
+
+#ifdef PORT_USART0_bm
+        if (remap)
+        {
+                pin = pin + 4;
+        }
+#endif
+
         pinmask = 1 << pin;
         port->DIRSET = pinmask;
         port->DIRCLR = pinmask >> 1;
+
+
+#ifdef PORT_USART0_bm
+        if (remap)
+        {
+                port->REMAP |= PORT_USART0_bm;
+        }
+#endif
         
         if (puen)
         {

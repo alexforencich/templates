@@ -520,10 +520,13 @@ endif
 # Sizes in bytes, not works (datasheet generally in words)
 # xmega
 MCU_S = $(subst atxmega,x,$(MCU))
-ifneq ($(filter $(MCU_S), x16a4 x16d4 x16a4u),)
+ifneq ($(filter $(MCU_S), x8e5),)
+  BOOT_SECTION_START		=0x002000
+endif
+ifneq ($(filter $(MCU_S), x16a4 x16d4 x16a4u x16e5),)
   BOOT_SECTION_START		=0x004000
 endif
-ifneq ($(filter $(MCU_S), x32a4 x32d4 x32a4u),)
+ifneq ($(filter $(MCU_S), x32a4 x32d4 x32a4u x32e5),)
   BOOT_SECTION_START		=0x008000
 endif
 ifneq ($(filter $(MCU_S), x64a1 x64a3 x64a4 x64d3 x64d4 x64a3u x64a4u x64b1 x64b3),)
@@ -674,14 +677,14 @@ endif
 
 
 # Define programs and commands.
-#SHELL = $(DIRAVRUTILS)/sh
-#NM = $(DIRAVRBIN)/avr-nm
-#CC = $(DIRAVRBIN)/avr-gcc
-#CXX = $(DIRAVRBIN)/avr-g++
-#OBJCOPY = $(DIRAVRBIN)/avr-objcopy
-#OBJDUMP= $(DIRAVRBIN)/avr-objdump
-#SIZE = $(DIRAVRBIN)/avr-size
-#AVRDUDE = $(DIRAVRBIN)/avrdude.sh
+#SHELL = "$(DIRAVRUTILS)/sh"
+#NM = "$(DIRAVRBIN)/avr-nm"
+#CC = "$(DIRAVRBIN)/avr-gcc"
+#CXX = "$(DIRAVRBIN)/avr-g++"
+#OBJCOPY = "$(DIRAVRBIN)/avr-objcopy"
+#OBJDUMP= "$(DIRAVRBIN)/avr-objdump"
+#SIZE = "$(DIRAVRBIN)/avr-size"
+#AVRDUDE = "$(DIRAVRBIN)/avrdude.sh"
 #REMOVE = rm -f
 #COPY = cp
 
@@ -762,7 +765,7 @@ sym: $(TARGET).sym
 # Configuration support
 %.conf %.conf.mk: force
 	cp $@ config.mk
-	$(MAKE)
+	"$(MAKE)"
 
 -include config.h.mk
 

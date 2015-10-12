@@ -163,6 +163,10 @@ private:
         uint8_t rtspin_bm;
         uint8_t ctspin_bm;
 #endif // __AVR_XMEGA__
+
+#ifdef PORT_USART0_bm
+        uint8_t remap;
+#endif
         
         uint8_t nonblocking;
         
@@ -203,6 +207,10 @@ public:
         void set_rts_pin(PORT_t *_rtsport, int _rtspin);
         void set_cts_pin(PORT_t *_ctsport, int _ctspin);
 #endif // __AVR_XMEGA__
+
+#ifdef PORT_USART0_bm
+        void set_remap(uint8_t rm);
+#endif
         
         void set_nonblocking(uint8_t nb);
         
